@@ -71,7 +71,7 @@ if [ ! -f "$0" ] || [ "${0#/dev/fd/}" != "$0" ]; then
 	info "obtendo o instalador (execução via pipe)"
 	SELF="$TMPD/install.sh"
 	download "https://raw.githubusercontent.com/$SELF_REPO/main/install.sh" "$SELF"
-	exec bash "$SELF" "$@"
+	exec bash "$SELF" ${ORIG_ARGS[@]+"${ORIG_ARGS[@]}"}
 fi
 SELF_PATH="$0"
 case "$SELF_PATH" in
