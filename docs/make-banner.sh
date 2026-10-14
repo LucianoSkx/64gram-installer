@@ -21,7 +21,7 @@ magick "$A/icon256.png" -resize 210x210 \
 	\( +clone -background '#000000' -shadow 70x10+0+12 \) \
 	+swap -background none -layers merge +repage /tmp/64gram-icon.png
 magick /tmp/64gram-banner.png /tmp/64gram-icon.png \
-	-gravity west -geometry +115+110 -composite /tmp/64gram-banner.png
+	-gravity west -geometry +115-13 -composite /tmp/64gram-banner.png
 
 magick /tmp/64gram-banner.png \
 	-fill white -font "$FONT_B" -pointsize 104 -gravity northwest \
