@@ -21,7 +21,7 @@ VERSION=""
 LOCAL=""
 USER_MODE=0
 UNINSTALL=0
-
+UPDATE_HINT=""
 info() { printf '\033[1;32m==>\033[0m %s\n' "$*"; }
 warn() { printf '\033[1;33m==> ATENÇÃO:\033[0m %s\n' "$*" >&2; }
 die()  { printf '\033[1;31mErro:\033[0m %s\n' "$*" >&2; exit 1; }
@@ -71,6 +71,7 @@ if [ ! -f "$0" ] || [ "${0#/dev/fd/}" != "$0" ]; then
 	info "obtendo o instalador (execução via pipe)"
 	SELF="$TMPD/install.sh"
 	download "https://raw.githubusercontent.com/$SELF_REPO/main/install.sh" "$SELF"
+	export UPDATE_HINT="bash <(curl -fsSL https://raw.githubusercontent.com/$SELF_REPO/main/install.sh)"
 	exec bash "$SELF" ${ORIG_ARGS[@]+"${ORIG_ARGS[@]}"}
 fi
 SELF_PATH="$0"
@@ -78,6 +79,7 @@ case "$SELF_PATH" in
 	/*) ;;
 	*) SELF_PATH="$PWD/$SELF_PATH" ;;
 esac
+: "${UPDATE_HINT:=$SELF_PATH}"
 
 if [ "$USER_MODE" = 1 ]; then
 	PREFIX="$PREFIX_USER"
@@ -293,8 +295,8 @@ cat <<EOF
   app:      $PREFIX/Telegram
 
 Execute:        $APP_CMD
-Atualizar:      $0
-Remover:        $0 --uninstall
+Atualizar:      ${UPDATE_HINT:-$SELF_PATH}
+Remover:        ${UPDATE_HINT:-$SELF_PATH} --uninstall
 EOF
 
 if [ "$USER_MODE" = 1 ]; then
