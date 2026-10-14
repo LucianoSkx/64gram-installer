@@ -1,0 +1,80 @@
+# Pacote Arch/CachyOS para 64Gram (Telegram Desktop não-oficial)
+# pkgname=64gram
+pkgname=64gram
+pkgver=1.2.10
+pkgrel=1
+pkgdesc="Unofficial desktop version of Telegram messaging app"
+arch=(x86_64)
+url="https://github.com/TDesktop-x64/tdesktop"
+license=(GPL-3.0-only)
+depends=(cairo desktop-file-utils fontconfig freetype2 glib2 harfbuzz hicolor-icon-theme libdbus libx11 libxcb libxext libxrender pango systemd-libs)
+optdepends=('ttf-opensans: default Open Sans font family')
+provides=(64gram-desktop)
+conflicts=(64gram-desktop 64gram-desktop-bin)
+install=64gram.install
+source=(
+	"${url}/raw/dev/Telegram/Resources/art/icon16.png"
+	"${url}/raw/dev/Telegram/Resources/art/icon32.png"
+	"${url}/raw/dev/Telegram/Resources/art/icon48.png"
+	"${url}/raw/dev/Telegram/Resources/art/icon64.png"
+	"${url}/raw/dev/Telegram/Resources/art/icon128.png"
+	"${url}/raw/dev/Telegram/Resources/art/icon256.png"
+	"${url}/raw/dev/Telegram/Resources/art/icon512.png"
+	"${url}/releases/download/v${pkgver}/64Gram_${pkgver}_linux.zip"
+)
+sha256sums=(
+	'ea1f36152b143cc2664daef5026656d55be2230ed42d43628e17ef7d2fff718c'
+	'9e4180c78c895783b4559c5e1a7868a2c9aa30a29969fe5dbe9a4ce4cf5cde6c'
+	'041b78681a35f07c3c929662fc66b6592c88588dc7297a5394ef7f923f2118e2'
+	'554dff9f55697d4e8ec69e9aa53678aa5dae3e91aa13adc3b115526d8d51dfc9'
+	'731431e47a5bc91c697d25c3a54fe7ba004752f5b66e0f282c47588ff7a314e6'
+	'3fb1400c7dc9bbc3b5cb3ffedcbf4a9b09c53e28b57a7ff33a8a6b9048864090'
+	'e297771c75bd2f81d637a3234f83568be62092f67d16946be23895fa92fa7119'
+	'b28d930436faaee63428f82275a3407e5a6c291ad12a14225bf4e0e9c3844889'
+)
+
+package() {
+	install -dm755 "$pkgdir/opt/64gram"
+	cp -a "$srcdir/Telegram" "$pkgdir/opt/64gram/Telegram"
+	chmod 755 "$pkgdir/opt/64gram/Telegram"
+
+	# desativa o atualizador interno: quem atualiza é o pacman/instalador
+	install -dm755 "$pkgdir/opt/64gram/externalupdater.d"
+	printf '%s\n' "/opt/64gram/Telegram" \
+		> "$pkgdir/opt/64gram/externalupdater.d/telegram-desktop.conf"
+
+	install -dm755 "$pkgdir/usr/bin"
+	ln -s /opt/64gram/Telegram "$pkgdir/usr/bin/64gram"
+
+	install -dm755 "$pkgdir/usr/share/applications"
+	cat > "$pkgdir/usr/share/applications/io.github.tdesktop_x64.TDesktop.desktop" <<'EOF'
+[Desktop Entry]
+Name=64Gram Desktop
+Comment=Unofficial desktop version of Telegram messaging app
+TryExec=64gram
+Exec=64gram -- %u
+Icon=64gram
+Terminal=false
+StartupWMClass=64Gram
+Type=Application
+Categories=Chat;Network;InstantMessaging;Qt;
+MimeType=x-scheme-handler/tg;
+Keywords=tg;chat;im;messaging;messenger;sms;tdesktop;64gram;
+Actions=quit;
+SingleMainWindow=true
+X-GNOME-UsesNotifications=true
+X-GNOME-SingleWindow=true
+
+[Desktop Action quit]
+Exec=64gram -quit
+Name=Quit Telegram
+Icon=application-exit
+EOF
+
+	local size
+	for size in 16 32 48 64 128 256 512; do
+		install -dm755 "$pkgdir/usr/share/icons/hicolor/${size}x${size}/apps"
+		install -m644 "$srcdir/icon${size}.png" \
+			"$pkgdir/usr/share/icons/hicolor/${size}x${size}/apps/64gram.png"
+	done
+}
