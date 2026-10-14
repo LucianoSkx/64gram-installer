@@ -26,6 +26,8 @@ curl -fsSL https://lucianoskx.github.io/64gram-installer/install.sh | bash
 
 Ou abra <https://lucianoskx.github.io/64gram-installer/> e copie com um clique.
 
+<sub>funciona em fish, zsh, bash, dash e sh · com flags: <code>| bash -s -- --user</code></sub>
+
 </div>
 
 ---
@@ -65,35 +67,6 @@ chmod +x 64gram-*-x86_64.AppImage
 </td>
 </tr>
 </table>
-
-<details open>
-<summary><b>🔧 Um comando, em qualquer distro (script universal)</b></summary>
-
-<br>
-
-```bash
-curl -fsSL https://lucianoskx.github.io/64gram-installer/install.sh | bash
-```
-
-Roda igual em **fish, zsh, bash, dash, sh e tcsh** — o pipe funciona em todos.
-(`bash <(curl ...)` também funciona, mas só existe em bash/zsh.)
-
-Com opções — em qualquer shell, use `-s --` antes das flags:
-
-```bash
-curl -fsSL https://lucianoskx.github.io/64gram-installer/install.sh | bash -s -- --user
-```
-
-Em sistemas sem `curl`, use o `wget`:
-
-```bash
-wget -qO- https://lucianoskx.github.io/64gram-installer/install.sh | bash
-```
-
-> O link do Pages serve exatamente o `install.sh` deste repositório (mesmo sha256),
-> então é sempre a versão atual — sem URL de `raw` nem de branch.
-
-</details>
 
 <details>
 <summary><b>📂 Se você já tem o arquivo</b></summary>
