@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# AppDir do 64Gram para AppImage: executa o binário do pacote.
+set -eu
+
+HERE="$(dirname "$(readlink -f "$0")")"
+export PATH="$HERE:$PATH"
+exec "$HERE/Telegram" "$@"

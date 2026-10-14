@@ -1,0 +1,111 @@
+name: packages
+
+on:
+  schedule:
+    # 4x por dia: pega releases novos do 64Gram
+    - cron: "23 */6 * * *"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "versão do 64Gram (vazio = última)"
+        required: false
+        type: string
+  push:
+    branches: [main]
+    paths:
+      - "packaging/**"
+      - ".github/workflows/packages.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "packaging/**"
+      - ".github/workflows/packages.yml"
+
+concurrency:
+  group: packages-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: dependências
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq squashfs-tools unzip jq
+
+      - name: nfpm e runtime do AppImage
+        run: |
+          curl -fsSL --retry 3 -o /tmp/nfpm.tar.gz \
+            "https://github.com/goreleaser/nfpm/releases/download/v2.48.0/nfpm_2.48.0_Linux_x86_64.tar.gz"
+          sudo tar -xzf /tmp/nfpm.tar.gz -C /usr/local/bin nfpm
+          curl -fsSL --retry 3 -o "$RUNNER_TEMP/runtime-x86_64" \
+            "https://github.com/AppImage/AppImageKit/releases/download/continuous/runtime-x86_64"
+          chmod +x "$RUNNER_TEMP/runtime-x86_64"
+        env:
+          NFPM_RUNTIME: ${{ runner.temp }}/runtime-x86_64
+
+      - name: construir pacotes
+        run: |
+          set -euo pipefail
+          args=(--out dist)
+          if [ -n "${{ inputs.version }}" ]; then
+            args+=(--version "${{ inputs.version }}")
+          fi
+          packaging/build-packages.sh "${args[@]}"
+        env:
+          NFPM_RUNTIME: ${{ runner.temp }}/runtime-x86_64
+
+      - name: checar artefatos
+        run: |
+          set -euo pipefail
+          ls -l dist
+          for f in dist/*.deb dist/*.rpm dist/*.AppImage; do
+            case "$f" in
+              *.deb) ar t "$f" | grep -q '^control.tar.gz$' ;;
+              *.rpm) [ "$(head -c 4 "$f" | od -An -tx1 | tr -d ' ')" = "edabeedb" ] ;;
+              *.AppImage) [ "$(head -c 4 "$f" | od -An -tx1 | tr -d ' ')" = "edabeedb" ] && [ -x "$f" ] ;;
+            esac
+          done
+          (cd dist && sha256sum -c SHA256SUMS >/dev/null)
+          echo "artefatos ok"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 64gram-packages
+          path: |
+            dist/*.deb
+            dist/*.rpm
+            dist/*.AppImage
+            dist/SHA256SUMS
+          if-no-files-found: error
+
+      - name: publicar release
+        if: ${{ github.event_name != 'pull_request' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          version="$(cat dist/VERSION)"
+          if git ls-remote --exit-code --tags origin "refs/tags/v$version" >/dev/null 2>&1; then
+            echo "tag v$version já existe — nada a publicar"
+            exit 0
+          fi
+          gh release create "v$version" dist/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "64Gram $version" \
+            --notes "Pacotes do 64Gram $version, gerados a partir do release oficial.
+          Upstream: https://github.com/TDesktop-x64/tdesktop/releases/tag/v$version
+
+          | arquivo | para |
+          |---|---|
+          | 64gram_${version}_amd64.deb | Debian, Ubuntu, Mint |
+          | 64gram-${version}-1.x86_64.rpm | Fedora, RHEL, openSUSE |
+          | 64gram-${version}-x86_64.AppImage | qualquer distro |
+
+          Instalação via instalador universal: \`bash <(curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/main/install.sh) --user\`"
