@@ -16,6 +16,18 @@ automaticamente pelo GitHub a cada release do
 
 </div>
 
+<div align="center">
+
+<h3>🔗 Link único</h3>
+
+```bash
+curl -fsSL https://lucianoskx.github.io/64gram-installer/install.sh | bash
+```
+
+Ou abra <https://lucianoskx.github.io/64gram-installer/> e copie com um clique.
+
+</div>
+
 ---
 
 ## ⚡ Instalação
@@ -60,7 +72,7 @@ chmod +x 64gram-*-x86_64.AppImage
 <br>
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/LucianoSkx/64gram-installer/main/install.sh | bash
+curl -fsSL https://lucianoskx.github.io/64gram-installer/install.sh | bash
 ```
 
 Roda igual em **fish, zsh, bash, dash, sh e tcsh** — o pipe funciona em todos.
@@ -69,14 +81,17 @@ Roda igual em **fish, zsh, bash, dash, sh e tcsh** — o pipe funciona em todos.
 Com opções — em qualquer shell, use `-s --` antes das flags:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/LucianoSkx/64gram-installer/main/install.sh | bash -s -- --user
+curl -fsSL https://lucianoskx.github.io/64gram-installer/install.sh | bash -s -- --user
 ```
 
 Em sistemas sem `curl`, use o `wget`:
 
 ```bash
-wget -qO- https://raw.githubusercontent.com/LucianoSkx/64gram-installer/main/install.sh | bash
+wget -qO- https://lucianoskx.github.io/64gram-installer/install.sh | bash
 ```
+
+> O link do Pages serve exatamente o `install.sh` deste repositório (mesmo sha256),
+> então é sempre a versão atual — sem URL de `raw` nem de branch.
 
 </details>
 

@@ -12,6 +12,8 @@ set -euo pipefail
 REPO="TDesktop-x64/tdesktop"
 # repositório onde este install.sh está publicado (para execução via curl | bash)
 SELF_REPO="LucianoSkx/64gram-installer"
+# link único para instalar — servido pelo GitHub Pages, é o mesmo install.sh do repo
+INSTALL_URL="https://lucianoskx.github.io/64gram-installer/install.sh"
 APP_CMD="64gram"
 APP_TITLE="64Gram Desktop"
 DESKTOP_ID="io.github.tdesktop_x64.TDesktop.desktop"
@@ -44,11 +46,11 @@ Uso: $0 [opções]
 Sem --user, instala no sistema (requer root; usa sudo automaticamente).
 
 Em qualquer shell (fish, zsh, bash, dash, sh):
-  curl -fsSL https://raw.githubusercontent.com/$SELF_REPO/main/install.sh | bash
-  curl -fsSL https://raw.githubusercontent.com/$SELF_REPO/main/install.sh | bash -s -- --user
+  curl -fsSL $INSTALL_URL | bash
+  curl -fsSL $INSTALL_URL | bash -s -- --user
 
 Sem curl no sistema:
-  wget -qO- https://raw.githubusercontent.com/$SELF_REPO/main/install.sh | bash
+  wget -qO- $INSTALL_URL | bash
 EOF
 	exit "${1:-0}"
 }
@@ -85,7 +87,7 @@ if [ ! -f "$0" ] || [ "${0#/dev/fd/}" != "$0" ]; then
 	info "obtendo o instalador (execução via pipe)"
 	SELF="$TMPD/install.sh"
 	download "https://raw.githubusercontent.com/$SELF_REPO/main/install.sh" "$SELF"
-	export UPDATE_HINT="curl -fsSL https://raw.githubusercontent.com/$SELF_REPO/main/install.sh | bash"
+	export UPDATE_HINT="curl -fsSL $INSTALL_URL | bash"
 	exec bash "$SELF" ${ORIG_ARGS[@]+"${ORIG_ARGS[@]}"}
 fi
 SELF_PATH="$0"
