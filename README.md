@@ -2,31 +2,31 @@
 
 <img src="docs/assets/banner.png" alt="64Gram para Linux" width="880">
 
+<p><b>64Gram no Linux — instale em um comando, sem compilar nada</b></p>
+
+<p><sub>pacotes <b>.deb</b>, <b>.rpm</b> e <b>AppImage</b> gerados no GitHub a cada release do <a href="https://github.com/TDesktop-x64/tdesktop">64Gram</a></sub></p>
+
+<br>
+
 [![Release](https://img.shields.io/github/v/release/LucianoSkx/64gram-installer?style=flat-square&color=2AABEE&label=release)](https://github.com/LucianoSkx/64gram-installer/releases)
 [![Downloads](https://img.shields.io/github/downloads/LucianoSkx/64gram-installer/total?style=flat-square&color=2AABEE&label=downloads)](https://github.com/LucianoSkx/64gram-installer/releases)
 [![CI](https://img.shields.io/github/actions/workflow/status/LucianoSkx/64gram-installer/packages.yml?style=flat-square&color=2AABEE&label=pacotes)](https://github.com/LucianoSkx/64gram-installer/actions/workflows/packages.yml)
 [![License](https://img.shields.io/badge/license-GPL--3.0-2AABEE?style=flat-square)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Linux-2AABEE?style=flat-square)](#)
 
-### 64Gram no Linux — sem compilar nada
-
-Instalador de um comando + pacotes **`.deb`**, **`.rpm`** e **`.AppImage`** gerados
-automaticamente pelo GitHub a cada release do
-[64Gram](https://github.com/TDesktop-x64/tdesktop) (Telegram Desktop não-oficial).
-
 </div>
+
+---
 
 <div align="center">
 
-<h3>🔗 Link único</h3>
+<p><b>🔗 Link único</b></p>
 
 ```bash
 curl -fsSL https://lucianoskx.github.io/64gram-installer/install.sh | bash
 ```
 
-Ou abra <https://lucianoskx.github.io/64gram-installer/> e copie com um clique.
-
-<sub>funciona em fish, zsh, bash, dash e sh · com flags: <code>| bash -s -- --user</code></sub>
+<p><sub>funciona em fish, zsh, bash, dash e sh · com flags: <code>| bash -s -- --user</code> · ou copie em <a href="https://lucianoskx.github.io/64gram-installer/">lucianoskx.github.io</a></sub></p>
 
 </div>
 
