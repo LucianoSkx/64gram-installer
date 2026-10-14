@@ -22,26 +22,28 @@ automaticamente pelo GitHub a cada release do
 
 <table>
 <tr>
-<td width="33%" align="center"><b>🐧 Debian · Ubuntu · Mint</b></td>
-<td width="33%" align="center"><b>🎩 Fedora · RHEL · openSUSE</b></td>
-<td width="33%" align="center"><b>📦 Qualquer distro</b></td>
-</tr>
-<tr>
-<td align="center">
+<td width="30%"><b>🐧 Debian · Ubuntu · Mint</b></td>
+<td width="70%">
 
 ```bash
 sudo apt install ./64gram_*_amd64.deb
 ```
 
 </td>
-<td align="center">
+</tr>
+<tr>
+<td><b>🎩 Fedora · RHEL · openSUSE</b></td>
+<td>
 
 ```bash
 sudo dnf install ./64gram-*.rpm
 ```
 
 </td>
-<td align="center">
+</tr>
+<tr>
+<td><b>📦 Qualquer distro (AppImage)</b></td>
+<td>
 
 ```bash
 chmod +x 64gram-*-x86_64.AppImage
@@ -87,14 +89,12 @@ paru -S 64gram-desktop-bin        # ou direto do AUR
 
 ## ✨ O que ele faz por você
 
-|  |  |
-|---|---|
-| 📥 **Baixa e verifica** | pega o release oficial e confere o `sha256` antes de instalar |
-| 🖥️ **Instala em dois modos** | sistema (`/opt/64gram`, precisa de root) ou só para você (`~/.local`) |
-| 🧩 **Integra com o desktop** | ícones, menu, `tg://` e modo `--quit` |
-| 🔄 **Atualiza e remove limpo** | `install.sh` de novo atualiza; `--uninstall` remove tudo |
-| 💬 **Não mexe nas conversas** | o `tdata` em `~/.local/share/64Gram` continua intacto |
-| 🤖 **Pacotes automáticos** | o GitHub gera `.deb`, `.rpm` e `.AppImage` a cada release novo |
+- 📥 **Baixa e verifica** — pega o release oficial e confere o `sha256` antes de instalar
+- 🖥️ **Instala em dois modos** — sistema (`/opt/64gram`, precisa de root) ou só para você (`~/.local`)
+- 🧩 **Integra com o desktop** — ícones, menu, `tg://` e modo `--quit`
+- 🔄 **Atualiza e remove limpo** — `install.sh` de novo atualiza; `--uninstall` remove tudo
+- 💬 **Não mexe nas conversas** — o `tdata` em `~/.local/share/64Gram` continua intacto
+- 🤖 **Pacotes automáticos** — o GitHub gera `.deb`, `.rpm` e `.AppImage` a cada release novo
 
 **Opções**
 
