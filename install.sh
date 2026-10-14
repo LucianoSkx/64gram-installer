@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 # 64Gram (unofficial Telegram Desktop) — instalador universal para Linux
 # Funciona em Debian, Ubuntu, Fedora, Arch, CachyOS, openSUSE e derivados.
+# Se chamarem com "sh install.sh", "dash install.sh" ou "zsh install.sh",
+# re-executa no bash antes de usar construções que só o bash entende.
+if [ -z "${BASH_VERSION:-}" ]; then
+	exec bash "$0" "$@"
+fi
+
 set -euo pipefail
 
 REPO="TDesktop-x64/tdesktop"
