@@ -108,4 +108,4 @@ jobs:
           | 64gram-${version}-1.x86_64.rpm | Fedora, RHEL, openSUSE |
           | 64gram-${version}-x86_64.AppImage | qualquer distro |
 
-          Instalação via instalador universal: \`bash <(curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/main/install.sh) --user\`"
+          Instalação universal (funciona em fish, zsh, bash): \`curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/main/install.sh | bash\`"

@@ -60,7 +60,34 @@ chmod +x 64gram-*-x86_64.AppImage
 <br>
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/LucianoSkx/64gram-installer/main/install.sh)
+curl -fsSL https://raw.githubusercontent.com/LucianoSkx/64gram-installer/main/install.sh | bash
+```
+
+Roda igual em **fish, zsh, bash, dash, sh e tcsh** — o pipe funciona em todos.
+(`bash <(curl ...)` também funciona, mas só existe em bash/zsh.)
+
+Com opções — em qualquer shell, use `-s --` antes das flags:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/LucianoSkx/64gram-installer/main/install.sh | bash -s -- --user
+```
+
+Em sistemas sem `curl`, use o `wget`:
+
+```bash
+wget -qO- https://raw.githubusercontent.com/LucianoSkx/64gram-installer/main/install.sh | bash
+```
+
+</details>
+
+<details>
+<summary><b>📂 Se você já tem o arquivo</b></summary>
+
+<br>
+
+```bash
+chmod +x install.sh
+./install.sh --user
 ```
 
 </details>

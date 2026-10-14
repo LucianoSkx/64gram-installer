@@ -36,6 +36,13 @@ Uso: $0 [opções]
   -h, --help        mostra esta ajuda
 
 Sem --user, instala no sistema (requer root; usa sudo automaticamente).
+
+Em qualquer shell (fish, zsh, bash, dash, sh):
+  curl -fsSL https://raw.githubusercontent.com/$SELF_REPO/main/install.sh | bash
+  curl -fsSL https://raw.githubusercontent.com/$SELF_REPO/main/install.sh | bash -s -- --user
+
+Sem curl no sistema:
+  wget -qO- https://raw.githubusercontent.com/$SELF_REPO/main/install.sh | bash
 EOF
 	exit "${1:-0}"
 }
@@ -65,12 +72,14 @@ download() { # url destino
 	fi
 }
 
-# quando executado via "curl ... | bash" ou "bash <(curl ...)", $0 não é um arquivo real
+# executado via "curl ... | bash" (bash, zsh, fish, dash, sh, tcsh): $0 não é
+# um arquivo real, então re-executa a si mesmo a partir de um arquivo de verdade.
+# a forma "bash <(curl ...)" (só bash/zsh) cai no mesmo caminho.
 if [ ! -f "$0" ] || [ "${0#/dev/fd/}" != "$0" ]; then
 	info "obtendo o instalador (execução via pipe)"
 	SELF="$TMPD/install.sh"
 	download "https://raw.githubusercontent.com/$SELF_REPO/main/install.sh" "$SELF"
-	export UPDATE_HINT="bash <(curl -fsSL https://raw.githubusercontent.com/$SELF_REPO/main/install.sh)"
+	export UPDATE_HINT="curl -fsSL https://raw.githubusercontent.com/$SELF_REPO/main/install.sh | bash"
 	exec bash "$SELF" ${ORIG_ARGS[@]+"${ORIG_ARGS[@]}"}
 fi
 SELF_PATH="$0"
