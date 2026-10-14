@@ -68,7 +68,7 @@ chmod +x 64gram-*-x86_64.AppImage
 </tr>
 </table>
 
-<details>
+<details open>
 <summary><b>📂 Se você já tem o arquivo</b></summary>
 
 <br>
@@ -80,7 +80,7 @@ chmod +x install.sh
 
 </details>
 
-<details>
+<details open>
 <summary><b>🐧 Arch · CachyOS · Manjaro</b></summary>
 
 <br>
@@ -133,7 +133,7 @@ packaging/build-packages.sh      build local dos três formatos
 packaging/PKGBUILD               pacote Arch/CachyOS
 ```
 
-<details>
+<details open>
 <summary><b>Notas técnicas</b></summary>
 
 <br>
