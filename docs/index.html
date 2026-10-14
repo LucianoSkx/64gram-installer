@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>64Gram para Linux — instalador</title>
+<meta name="description" content="Instalador do 64Gram (Telegram Desktop não-oficial) para Linux: .deb, .rpm e AppImage gerados no GitHub.">
+<style>
+  :root {
+    --bg: #0e1621;
+    --panel: #16212e;
+    --line: #2AABEE;
+    --text: #e7f0f8;
+    --muted: #8ab4f8;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 32px 16px 64px;
+    background: radial-gradient(1200px 600px at 50% -10%, #1b3348 0%, var(--bg) 60%) no-repeat, var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI", system-ui, -apple-system, "Noto Sans", sans-serif;
+    line-height: 1.6;
+    text-align: center;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; }
+  img.hero { width: 100%; max-width: 760px; border-radius: 12px; margin-bottom: 28px; }
+  h1 { font-size: 1.6rem; margin: 0 0 6px; }
+  p.sub { color: var(--muted); margin: 0 0 28px; }
+  .cmd {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--panel); border: 1px solid #24425c; border-radius: 10px;
+    padding: 14px 16px; text-align: left; margin: 0 auto 12px; max-width: 720px;
+  }
+  .cmd code {
+    flex: 1; font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", monospace;
+    font-size: .92rem; color: #dbeafe; overflow-x: auto; white-space: nowrap;
+  }
+  .cmd button {
+    background: var(--line); color: #06121c; border: 0; border-radius: 8px;
+    padding: 8px 14px; font-weight: 700; cursor: pointer; font-size: .85rem;
+  }
+  .cmd button:hover { filter: brightness(1.1); }
+  .hint { color: #6f8ba6; font-size: .8rem; margin: 8px 0 32px; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 34px; }
+  .card {
+    background: var(--panel); border: 1px solid #1e3448; border-radius: 10px;
+    padding: 18px 16px; text-decoration: none; color: var(--text); transition: .15s;
+  }
+  .card:hover { border-color: var(--line); transform: translateY(-2px); }
+  .card b { display: block; font-size: 1rem; }
+  .card span { color: var(--muted); font-size: .82rem; }
+  a { color: var(--line); }
+  footer { color: #56718a; font-size: .8rem; }
+  footer a { color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <img class="hero" src="assets/banner.png" alt="64Gram para Linux">
+
+  <p class="sub">Instale com um comando, em qualquer distro.</p>
+
+  <div class="cmd">
+    <code>curl -fsSL https://lucianoskx.github.io/64gram-installer/install.sh | bash</code>
+    <button onclick="copiar(this)">copiar</button>
+  </div>
+  <p class="hint">funciona em fish, zsh, bash, dash e sh · com flags: <code>| bash -s -- --user</code></p>
+
+  <div class="cards">
+    <a class="card" href="https://github.com/LucianoSkx/64gram-installer/releases/latest"><b>📄 .deb</b><span>Debian · Ubuntu · Mint</span></a>
+    <a class="card" href="https://github.com/LucianoSkx/64gram-installer/releases/latest"><b>🎩 .rpm</b><span>Fedora · RHEL · openSUSE</span></a>
+    <a class="card" href="https://github.com/LucianoSkx/64gram-installer/releases/latest"><b>📦 AppImage</b><span>qualquer distro</span></a>
+    <a class="card" href="https://github.com/LucianoSkx/64gram-installer"><b>🐙 Código</b><span>GitHub</span></a>
+  </div>
+
+  <footer>
+    Projeto não-oficial · <a href="https://github.com/TDesktop-x64/tdesktop">64Gram</a> ·
+    licença GPL-3.0
+  </footer>
+</div>
+
+<script>
+function copiar(btn) {
+  const txt = btn.previousElementSibling.textContent.trim();
+  navigator.clipboard.writeText(txt).then(() => {
+    btn.textContent = "copiado!";
+    setTimeout(() => (btn.textContent = "copiar"), 1600);
+  });
+}
+</script>
+</body>
+</html>
