@@ -21,7 +21,6 @@ VERSION=""
 LOCAL=""
 USER_MODE=0
 UNINSTALL=0
-UPDATE_HINT=""
 info() { printf '\033[1;32m==>\033[0m %s\n' "$*"; }
 warn() { printf '\033[1;33m==> ATENÇÃO:\033[0m %s\n' "$*" >&2; }
 die()  { printf '\033[1;31mErro:\033[0m %s\n' "$*" >&2; exit 1; }
