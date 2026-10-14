@@ -96,7 +96,7 @@ jobs:
             echo "tag v$version já existe — nada a publicar"
             exit 0
           fi
-          gh release create "v$version" dist/* \
+          gh release create "v$version" dist/*.deb dist/*.rpm dist/*.AppImage dist/SHA256SUMS \
             --repo "$GITHUB_REPOSITORY" \
             --title "64Gram $version" \
             --notes "Pacotes do 64Gram $version, gerados a partir do release oficial.

@@ -43,6 +43,29 @@ bash <(curl -fsSL https://raw.githubusercontent.com/LucianoSkx/64gram-installer/
   harfbuzz, freetype2, fontconfig, libx11/xcb/xext/xrender, libsystemd, libdbus.
   O Qt6 já vai embutido no binário do release — não precisa de Qt do sistema.
 
+## Pacotes prontos (.deb, .rpm, AppImage)
+
+O GitHub Actions (`.github/workflows/packages.yml`) baixa o release oficial do 64Gram,
+verifica o sha256 e publica `.deb`, `.rpm` e `.AppImage` em
+[Releases](https://github.com/LucianoSkx/64gram-installer/releases):
+
+```bash
+# Debian/Ubuntu/Mint
+sudo apt install ./64gram_1.2.10_amd64.deb
+
+# Fedora/RHEL/openSUSE
+sudo dnf install ./64gram-1.2.10-1.x86_64.rpm
+
+# qualquer distro
+chmod +x 64gram-1.2.10-x86_64.AppImage && ./64gram-1.2.10-x86_64.AppImage
+```
+
+- Roda sozinho a cada 6h (e em push/PR que mexa em `packaging/`), via
+  *workflow_dispatch* dá para fixar uma versão.
+- Idempotente: se a tag `v<versão>` já existir, não publica de novo.
+- `packaging/build-packages.sh` constrói os três localmente também
+  (precisa de `nfpm`, `mksquashfs` e do runtime do AppImage).
+
 ## Pacote Arch/CachyOS (PKGBUILD)
 
 Em vez do script, em Arch/CachyOS dá para empacotar/instalar como pacote nativo:
@@ -60,3 +83,16 @@ Quem preferir o AUR: `paru -S 64gram-desktop-bin` (pacote `64gram-desktop-bin`).
 - O release do 64Gram é um zip portátil (`Telegram` + `Updater`); o instalador só coloca
   no lugar certo e integra com o sistema — nenhuma compilação.
 - Conversas/contas ficam em `~/.local/share/64Gram` e sobrevivem a atualizações e remoções.
+
+## Estrutura
+
+```
+install.sh                       instalador universal (bash puro, sem dependências além de curl/wget)
+.github/workflows/packages.yml   CI: deb + rpm + AppImage
+packaging/nfpm.yaml              fonte única dos pacotes deb/rpm
+packaging/build-packages.sh      build local dos três formatos
+packaging/appimage/build.sh      build da AppImage (AppDir + mksquashfs + runtime)
+packaging/scripts/               postinstall/postremove
+packaging/shared/                desktop entry
+packaging/PKGBUILD               pacote Arch/CachyOS
+```
