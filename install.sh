@@ -328,7 +328,7 @@ info "sistema: $SYS_NAME ($SYS_FAMILY)"
 # Antes de instalar por pacote nativo, tira os arquivos de uma instalação
 # genérica anterior: senão o gerenciador recusa (arquivos não pertencentes a pacote).
 cleanup_generic() {
-	local s trocou=0
+	local s
 
 	if [ -e "$PREFIX_SYSTEM" ] || [ -e "$HOME/.local/opt/64gram" ] || [ -f "$DATA_HOME/applications/$DESKTOP_ID" ]; then
 		info "tirando a instalação genérica anterior para o pacote entrar no lugar"
@@ -339,39 +339,18 @@ cleanup_generic() {
 			rm -f "$DATA_HOME/icons/hicolor/${s}x${s}/apps/$ICON_NAME.png"
 			rm -f "$HOME/.local/share/icons/hicolor/${s}x${s}/apps/$ICON_NAME.png"
 		done
-		trocou=1
 	fi
 
 	if command -v update-desktop-database >/dev/null 2>&1; then
 		update-desktop-database "$DATA_HOME/applications" >/dev/null 2>&1 || true
 	fi
-	if [ "$trocou" = 1 ]; then
-		info "conversas mantidas em ~/.local/share/64Gram"
-	fi
 	return 0
 }
 
 try_native() {
-	local v helper
+	local v
 	case "$SYS_FAMILY" in
-		arch)
-			# helpers de AUR recusam root: se viermos do sudo, voltamos ao usuário
-			local as_user=()
-			if [ "$SYS_ROOT" = 1 ] && [ -n "${SUDO_USER:-}" ]; then
-				as_user=(sudo -u "$SUDO_USER" -H)
-			fi
-			for helper in paru yay pikaur; do
-				command -v "$helper" >/dev/null 2>&1 || continue
-				cleanup_generic
-				info "instalando pelo AUR com $helper (64gram-desktop-bin)"
-				if ${as_user[@]+"${as_user[@]}"} "$helper" -S --needed --noconfirm 64gram-desktop-bin; then
-					return 0
-				fi
-				warn "$helper não conseguiu instalar"
-			done
-			return 1 ;;
-		debian|rpm|suse)
-		cleanup_generic ;;
+		arch|debian|rpm|suse) cleanup_generic ;;
 		*) return 1 ;;
 	esac
 

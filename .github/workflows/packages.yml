@@ -61,14 +61,31 @@ jobs:
         env:
           NFPM_RUNTIME: ${{ runner.temp }}/runtime-x86_64
 
+      - name: pacote arch (.pkg.tar.zst)
+        run: |
+          set -euo pipefail
+          version="$(cat dist/VERSION)"
+          user="$(id -u)"
+          # makepkg só existe no Arch: roda num contêiner, como usuário normal
+          docker run --rm -v "$PWD:/build" -w /build archlinux:latest bash -c "
+            set -e
+            pacman -Sy --noconfirm --needed base-devel curl >/dev/null
+            useradd -m builder 2>/dev/null || true
+            chown -R builder /build
+            su builder -c 'cd /build && bash packaging/build-arch.sh $version \"\" dist'
+          "
+          # o makepkg grava com o uid do contêiner: normaliza a posse
+          sudo chown -R "$user:$user" dist
+          ls -l dist/*.pkg.tar.zst
+
       - name: checar artefatos
         run: |
           set -euo pipefail
           ls -l dist
-          for f in dist/*.deb dist/*.rpm dist/*.AppImage; do
+          for f in dist/*.deb dist/*.rpm dist/*.pkg.tar.zst dist/*.AppImage; do
             case "$f" in
               *.deb) ar t "$f" | grep -q '^control.tar.gz$' ;;
-              *.rpm) [ "$(head -c 4 "$f" | od -An -tx1 | tr -d ' ')" = "edabeedb" ] ;;
+              *.rpm|*.pkg.tar.zst) [ "$(head -c 4 "$f" | od -An -tx1 | tr -d ' ')" = "edabeedb" ] ;;
               *.AppImage) [ "$(head -c 4 "$f" | od -An -tx1 | tr -d ' ')" = "edabeedb" ] && [ -x "$f" ] ;;
             esac
           done
@@ -81,6 +98,7 @@ jobs:
           path: |
             dist/*.deb
             dist/*.rpm
+            dist/*.pkg.tar.zst
             dist/*.AppImage
             dist/SHA256SUMS
           if-no-files-found: error
@@ -96,7 +114,7 @@ jobs:
             echo "tag v$version já existe — nada a publicar"
             exit 0
           fi
-          gh release create "v$version" dist/*.deb dist/*.rpm dist/*.AppImage dist/SHA256SUMS \
+          gh release create "v$version" dist/*.deb dist/*.rpm dist/*.pkg.tar.zst dist/*.AppImage dist/SHA256SUMS \
             --repo "$GITHUB_REPOSITORY" \
             --title "64Gram $version" \
             --notes "Pacotes do 64Gram $version, gerados a partir do release oficial.

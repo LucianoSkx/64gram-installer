@@ -4,3 +4,5 @@
 pkg/
 src/
 dist/
+packaging/stage/
+packaging/nfpm.release.yaml

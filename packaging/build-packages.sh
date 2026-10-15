@@ -27,6 +27,7 @@ done
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(dirname "$HERE")"
+ICON_SIZES="16 32 48 64 128 256 512"
 RUNTIME="${NFPM_RUNTIME:-/tmp/runtime-x86_64}"
 
 die() { echo "erro: $*" >&2; exit 1; }
@@ -53,10 +54,10 @@ fi
 echo "==> versão: $VERSION"
 
 # ------------------------------------------------------------ baixar e verificar
-WORK="$(mktemp -d)"
+WORK="${WORK_OVERRIDE:-$(mktemp -d)}"
 STAGE="$HERE/stage"
 CONFIG="$HERE/nfpm.release.yaml"
-trap 'rm -rf "$WORK" "$STAGE" "$CONFIG"' EXIT
+# trap 'rm -rf "$WORK" "$STAGE" "$CONFIG"' EXIT
 
 if [ -n "$LOCAL" ]; then
 	[ -f "$LOCAL" ] || die "arquivo não encontrado: $LOCAL"
@@ -86,7 +87,7 @@ cp "$HERE/shared/io.github.tdesktop_x64.TDesktop.desktop" \
 
 printf '%s\n' "/opt/64gram/Telegram" > "$STAGE/externalupdater.d/telegram-desktop.conf"
 
-for size in 16 32 48 64 128 256 512; do
+for size in $ICON_SIZES; do
 	dir="$STAGE/usr/share/icons/hicolor/${size}x${size}/apps"
 	mkdir -p "$dir"
 	curl -fsSL --retry 3 --retry-all-errors -o "$dir/64gram.png" \
@@ -107,6 +108,15 @@ mkdir -p "$ROOT/$OUTDIR"
 echo "==> appimage"
 "$HERE/appimage/build.sh" "$VERSION" "$ZIP" \
 	"$OUTDIR/64gram-${VERSION}-x86_64.AppImage" "$RUNTIME" >/dev/null
+
+# ------------------------------------------------------------ arch
+# o empacotamento Arch precisa de makepkg; no CI isso roda num contêiner Arch
+if command -v makepkg >/dev/null 2>&1; then
+	"$HERE/build-arch.sh" "$VERSION" "$ZIP" "$ROOT/$OUTDIR" ||
+		echo "aviso: pacote Arch não foi gerado" >&2
+else
+	echo "==> pulando .pkg.tar.zst (sem makepkg neste sistema)"
+fi
 
 # ------------------------------------------------------------ checksums
 (cd "$ROOT/$OUTDIR" && sha256sum -- * > SHA256SUMS)
