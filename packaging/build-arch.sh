@@ -38,7 +38,9 @@ done
 cp "$HERE/shared/io.github.tdesktop_x64.TDesktop.desktop" "$WORK/"
 cp "$HERE/64gram.install" "$WORK/"
 # o PKGBUILD referencia o zip pelo nome canônico do release
-cp "$ZIP" "$WORK/64Gram_${VERSION}_linux.zip"
+if [ "$ZIP" != "$WORK/64Gram_${VERSION}_linux.zip" ]; then
+	cp "$ZIP" "$WORK/64Gram_${VERSION}_linux.zip"
+fi
 
 sum_lines="	'$ZIP_SHA'"
 for size in $ICON_SIZES; do
