@@ -29,7 +29,8 @@ DATA_USER="${XDG_DATA_HOME:-$HOME/.local/share}/64Gram"
 ORIG_ARGS=("$@")
 VERSION=""
 LOCAL=""
-USER_MODE=0
+# padrão: instala só para o usuário, sem pedir senha. Use --system para o pacote do sistema.
+USER_MODE=1
 UNINSTALL=0
 ASSUME_YES=0
 info() { printf '\033[1;32m==>\033[0m %s\n' "$*"; }
@@ -153,21 +154,24 @@ usage() {
 	cat <<EOF
 Uso: $0 [opções]
 
-  --user            instala só para o usuário (~/.local), sem root
+  --user            instala só para você (padrão, sem pedir senha)
+  --system          instala no sistema, pelo gerenciador (pede sudo)
   --version <ver>   instala uma versão específica (ex: 1.2.10)
   --local <zip>     instala a partir de um pacote já baixado (offline)
   --uninstall       remove TUDO: app, atalho, ícones e as conversas
   -y, --yes         não pergunta confirmação ao remover
   -h, --help        mostra esta ajuda
 
-Padrão: baixa o pacote nativo da distro (pkg.tar.zst no Arch/CachyOS, .deb no
-Debian/Ubuntu, .rpm no Fedora/openSUSE) e deixa o gerenciador resolver as
-dependências. Sem pacote disponível, cai no instalador genérico (zip + /opt).
-Com --user, usa sempre o modo genérico, só na sua conta.
+Padrão (usuário): sem root e sem senha — app em ~/.local/opt/64gram e comando
+em ~/.local/bin/64gram. É o que o Telegram Desktop oficial faz.
+
+Com --system: baixa o pacote nativo da distro (pkg.tar.zst no Arch/CachyOS,
+.deb no Debian/Ubuntu, .rpm no Fedora/openSUSE) e deixa o gerenciador resolver
+as dependências. Sem pacote disponível, cai no instalador genérico em /opt.
 
 Em qualquer shell (fish, zsh, bash, dash, sh):
   curl -fsSL $INSTALL_URL | bash
-  curl -fsSL $INSTALL_URL | bash -s -- --user
+  curl -fsSL $INSTALL_URL | bash -s -- --system
 
 Sem curl no sistema:
   wget -qO- $INSTALL_URL | bash
@@ -178,6 +182,7 @@ EOF
 while [ $# -gt 0 ]; do
 	case "$1" in
 		--user) USER_MODE=1 ;;
+		--system) USER_MODE=0 ;;
 		--uninstall) UNINSTALL=1 ;;
 		-y|--yes) ASSUME_YES=1 ;;
 		--version) shift; VERSION="${1:-}" ;;
@@ -231,7 +236,7 @@ else
 	BIN_DIR="/usr/local/bin"
 	DATA_HOME="/usr/share"
 	if [ "$(id -u)" != "0" ]; then
-		command -v sudo >/dev/null 2>&1 || die "execute como root (ou use --user)"
+		command -v sudo >/dev/null 2>&1 || die "sem sudo: use o modo usuário (padrão) ou rode como root"
 		exec sudo -E bash "$SELF_PATH" ${ORIG_ARGS[@]+"${ORIG_ARGS[@]}"}
 	fi
 fi
@@ -301,7 +306,7 @@ uninstall() {
 	if [ -e "$prefix_s" ]; then
 		if [ "$SYS_ROOT" != 1 ]; then
 			warn "existe também uma instalação do sistema em $prefix_s"
-			warn "para removê-la, rode a desinstalação sem --user (o script pede sudo)"
+			warn "para removê-la, rode com --system (o script pede sudo)"
 		else
 			info "removendo instalação do sistema"
 			rm -f "$BIN_DIR/$APP_CMD" 2>/dev/null || true

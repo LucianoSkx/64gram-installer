@@ -40,7 +40,7 @@
 curl -fsSL https://lucianoskx.github.io/64gram-installer/install.sh | bash
 ```
 
-<p><sub>funciona em fish, zsh, bash, dash e sh · com flags: <code>| bash -s -- --user</code> · ou copie em <a href="https://lucianoskx.github.io/64gram-installer/">lucianoskx.github.io</a></sub></p>
+<p><sub>instala só para você, <b>sem pedir senha</b> · funciona em fish, zsh, bash, dash e sh · no sistema (com sudo): <code>| bash -s -- --system</code></sub></p>
 
 </div>
 
@@ -104,7 +104,8 @@ Use `--yes` para não perguntar (`uninstall.sh | bash --yes`).
 
 ```bash
 chmod +x install.sh
-./install.sh --user
+./install.sh              # instala só para você (padrão)
+./install.sh --system     # instala no sistema, pelo gerenciador (pede sudo)
 ```
 
 </details>
@@ -114,8 +115,8 @@ chmod +x install.sh
 
 <br>
 
-O link único já instala pelo pacote certo — no Arch/CachyOS ele baixa o
-`.pkg.tar.zst` e chama o `pacman -U`, que resolve as dependências sozinho.
+Com `--system`, no Arch/CachyOS o script baixa o `.pkg.tar.zst` e chama o
+`pacman -U`, que resolve as dependências sozinho.
 
 ```bash
 # manualmente, a partir do .pkg.tar.zst da página:
@@ -149,7 +150,8 @@ cd packaging && makepkg -si
 **Opções**
 
 ```bash
-./install.sh --user              # instala só para o usuário, sem root
+./install.sh --user              # padrão: só para você, sem senha
+./install.sh --system            # no sistema, pelo gerenciador (pede sudo)
 ./install.sh --version 1.2.10    # versão específica
 ./install.sh --local pacote.zip  # instala um zip já baixado (offline)
 ./install.sh --uninstall         # remove
