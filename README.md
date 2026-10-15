@@ -150,6 +150,8 @@ packaging/PKGBUILD               pacote Arch/CachyOS
 
 </details>
 
+---
+
 <div align="center">
 <sub>Projeto não-oficial · baseado no <a href="https://github.com/telegramdesktop/tdesktop">Telegram Desktop</a> · licença GPL-3.0</sub>
 </div>
