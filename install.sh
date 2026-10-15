@@ -325,6 +325,32 @@ fi
 detect_system
 info "sistema: $SYS_NAME ($SYS_FAMILY)"
 
+# Antes de instalar por pacote nativo, tira os arquivos de uma instalação
+# genérica anterior: senão o gerenciador recusa (arquivos não pertencentes a pacote).
+cleanup_generic() {
+	local s trocou=0
+
+	if [ -e "$PREFIX_SYSTEM" ] || [ -e "$HOME/.local/opt/64gram" ] || [ -f "$DATA_HOME/applications/$DESKTOP_ID" ]; then
+		info "tirando a instalação genérica anterior para o pacote entrar no lugar"
+		rm -f "$BIN_DIR/$APP_CMD" "$HOME/.local/bin/$APP_CMD"
+		rm -f "$DATA_HOME/applications/$DESKTOP_ID" "$HOME/.local/share/applications/$DESKTOP_ID"
+		rm -rf "$PREFIX_SYSTEM" "$HOME/.local/opt/64gram"
+		for s in $ICON_SIZES; do
+			rm -f "$DATA_HOME/icons/hicolor/${s}x${s}/apps/$ICON_NAME.png"
+			rm -f "$HOME/.local/share/icons/hicolor/${s}x${s}/apps/$ICON_NAME.png"
+		done
+		trocou=1
+	fi
+
+	if command -v update-desktop-database >/dev/null 2>&1; then
+		update-desktop-database "$DATA_HOME/applications" >/dev/null 2>&1 || true
+	fi
+	if [ "$trocou" = 1 ]; then
+		info "conversas mantidas em ~/.local/share/64Gram"
+	fi
+	return 0
+}
+
 try_native() {
 	local v helper
 	case "$SYS_FAMILY" in
@@ -336,6 +362,7 @@ try_native() {
 			fi
 			for helper in paru yay pikaur; do
 				command -v "$helper" >/dev/null 2>&1 || continue
+				cleanup_generic
 				info "instalando pelo AUR com $helper (64gram-desktop-bin)"
 				if ${as_user[@]+"${as_user[@]}"} "$helper" -S --needed --noconfirm 64gram-desktop-bin; then
 					return 0
@@ -343,7 +370,8 @@ try_native() {
 				warn "$helper não conseguiu instalar"
 			done
 			return 1 ;;
-		debian|rpm|suse) ;;
+		debian|rpm|suse)
+		cleanup_generic ;;
 		*) return 1 ;;
 	esac
 
