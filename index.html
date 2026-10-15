@@ -73,20 +73,22 @@
 
   <p class="sub">Instale com um comando, em qualquer distro.</p>
 
-<p class="section-title">ou baixe o pacote pronto</p>
-
-  <div class="cmd">
+<div class="cmd">
     <code>curl -fsSL https://lucianoskx.github.io/64gram-installer/install.sh | bash</code>
     <button onclick="copiar(this)">copiar</button>
   </div>
   <p class="hint">funciona em fish, zsh, bash, dash e sh · com flags: <code>| bash -s -- --user</code></p>
 
+  <p class="section-title">ou baixe o pacote pronto</p>
+
   <div class="cards">
-    <a class="card" href="https://github.com/LucianoSkx/64gram-installer/releases/latest"><b>📄 .deb</b><span>Debian · Ubuntu · Mint</span></a>
-    <a class="card" href="https://github.com/LucianoSkx/64gram-installer/releases/latest"><b>🎩 .rpm</b><span>Fedora · RHEL · openSUSE</span></a>
-    <a class="card" href="https://github.com/LucianoSkx/64gram-installer/releases/latest"><b>📦 AppImage</b><span>qualquer distro</span></a>
+    <a class="card" id="dl-deb" href="https://github.com/LucianoSkx/64gram-installer/releases/latest"><b>📄 .deb</b><span>Debian · Ubuntu · Mint</span></a>
+    <a class="card" id="dl-rpm" href="https://github.com/LucianoSkx/64gram-installer/releases/latest"><b>🎩 .rpm</b><span>Fedora · RHEL · openSUSE</span></a>
+    <a class="card" id="dl-appimage" href="https://github.com/LucianoSkx/64gram-installer/releases/latest"><b>📦 AppImage</b><span>qualquer distro</span></a>
     <a class="card" href="https://github.com/LucianoSkx/64gram-installer"><b>🐙 Código</b><span>GitHub</span></a>
   </div>
+
+  <p class="hint" id="versao">&nbsp;</p>
 
   <footer>
     Projeto não-oficial · <a href="https://github.com/TDesktop-x64/tdesktop">64Gram</a> ·
@@ -102,6 +104,34 @@ function copiar(btn) {
     setTimeout(() => (btn.textContent = "copiar"), 1600);
   });
 }
+
+// transforma os cards em downloads diretos da última versão
+const REPO = "LucianoSkx/64gram-installer";
+const formatos = [
+  ["dl-deb", ".deb"],
+  ["dl-rpm", ".rpm"],
+  ["dl-appimage", ".AppImage"],
+];
+
+fetch(`https://api.github.com/repos/${REPO}/releases/latest`)
+  .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+  .then((rel) => {
+    const tag = rel.tag_name;
+    if (!tag) throw new Error("sem release");
+    for (const [id, ext] of formatos) {
+      const asset = rel.assets.find((a) => a.name.endsWith(ext));
+      const card = document.getElementById(id);
+      if (!asset || !card) continue;
+      card.href = asset.browser_download_url;
+      const sub = card.querySelector("span");
+      if (sub) sub.textContent = `${Math.round(asset.size / 1048576)} MB · ${tag}`;
+    }
+    document.getElementById("versao").textContent = `última versão: ${tag}`;
+  })
+  .catch(() => {
+    document.getElementById("versao").innerHTML =
+      'versões em <a href="https://github.com/' + REPO + '/releases">releases</a>';
+  });
 </script>
 </body>
 </html>
