@@ -40,7 +40,7 @@
 curl -fsSL https://lucianoskx.github.io/64gram-installer/install.sh | bash
 ```
 
-<p><sub>instala só para você, <b>sem pedir senha</b> · funciona em fish, zsh, bash, dash e sh · no sistema (com sudo): <code>| bash -s -- --system</code></sub></p>
+<p><sub>instala só para você, <b>sem pedir senha</b> · funciona em fish, zsh, bash, dash e sh</sub></p>
 
 </div>
 
@@ -104,8 +104,7 @@ Use `--yes` para não perguntar (`uninstall.sh | bash --yes`).
 
 ```bash
 chmod +x install.sh
-./install.sh              # instala só para você (padrão)
-./install.sh --system     # instala no sistema, pelo gerenciador (pede sudo)
+./install.sh
 ```
 
 </details>
@@ -115,14 +114,15 @@ chmod +x install.sh
 
 <br>
 
-Com `--system`, no Arch/CachyOS o script baixa o `.pkg.tar.zst` e chama o
-`pacman -U`, que resolve as dependências sozinho.
+Se você preferir gerenciar pelo pacman, o pacote também está na página:
 
 ```bash
-# manualmente, a partir do .pkg.tar.zst da página:
 sudo pacman -U 64gram-1.2.10-1-x86_64.pkg.tar.zst
+```
 
-# ou compilando o PKGBUILD deste repo:
+E dá para compilar o PKGBUILD deste repositório:
+
+```bash
 cd packaging && makepkg -si
 ```
 
@@ -141,21 +141,11 @@ cd packaging && makepkg -si
 ## ✨ O que ele faz por você
 
 - 📥 **Baixa e verifica** — pega o release oficial e confere o `sha256` antes de instalar
-- 🖥️ **Instala em dois modos** — sistema (`/opt/64gram`, precisa de root) ou só para você (`~/.local`)
+- 🔑 **Sem senha** — instala no seu usuário (`~/.local`), sem pedir root
 - 🧩 **Integra com o desktop** — ícones, menu, `tg://` e modo `--quit`
-- 🔄 **Atualiza e remove limpo** — `install.sh` de novo atualiza; `--uninstall` remove tudo
+- 🔄 **Atualiza e remove limpo** — `install.sh` de novo atualiza; `uninstall.sh` remove tudo
 - 💬 **Instalar não mexe nas conversas** — o `tdata` em `~/.local/share/64Gram` fica intacto ao instalar e atualizar
-- 🤖 **Pacotes automáticos** — o GitHub gera `.deb`, `.rpm` e `.AppImage` a cada release novo
-
-**Opções**
-
-```bash
-./install.sh --user              # padrão: só para você, sem senha
-./install.sh --system            # no sistema, pelo gerenciador (pede sudo)
-./install.sh --version 1.2.10    # versão específica
-./install.sh --local pacote.zip  # instala um zip já baixado (offline)
-./install.sh --uninstall         # remove
-```
+- 🤖 **Pacotes automáticos** — o GitHub gera `.deb`, `.rpm`, `.pkg.tar.zst` e `.AppImage` a cada release novo
 
 ---
 

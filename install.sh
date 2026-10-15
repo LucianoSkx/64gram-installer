@@ -171,7 +171,6 @@ as dependências. Sem pacote disponível, cai no instalador genérico em /opt.
 
 Em qualquer shell (fish, zsh, bash, dash, sh):
   curl -fsSL $INSTALL_URL | bash
-  curl -fsSL $INSTALL_URL | bash -s -- --system
 
 Sem curl no sistema:
   wget -qO- $INSTALL_URL | bash
