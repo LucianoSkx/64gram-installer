@@ -36,18 +36,134 @@ info() { printf '\033[1;32m==>\033[0m %s\n' "$*"; }
 warn() { printf '\033[1;33m==> ATENÇÃO:\033[0m %s\n' "$*" >&2; }
 die()  { printf '\033[1;31mErro:\033[0m %s\n' "$*" >&2; exit 1; }
 
+# ---------------------------------------------------------------- detecção
+# Reconhece a distro para usar o gerenciador e os nomes de pacote certos.
+SYS_NAME="sistema desconhecido"
+SYS_FAMILY="desconhecida"
+SYS_PM=""          # comando completo para instalar pacotes
+SYS_ROOT=0         # 1 se estiver instalado como root
+
+detect_system() {
+	SYS_ROOT=0
+	[ "$(id -u)" = "0" ] && SYS_ROOT=1
+
+	if [ ! -r /etc/os-release ]; then
+		warn "sem /etc/os-release: não dá para identificar a distro"
+		return 0
+	fi
+
+	local id="" like="" pretty=""
+	# shellcheck disable=SC1091
+	. /etc/os-release
+	id="${ID:-}"; like="${ID_LIKE:-}"; pretty="${PRETTY_NAME:-$id}"
+	SYS_NAME="${pretty:-$id}"
+	[ -n "$SYS_NAME" ] || SYS_NAME="sistema desconhecido"
+
+	case " ${like:-} ${id:-} " in
+		*" arch "*|*" cachyos "*|*" manjaro "*|*" endeavouros "*|*" garuda "*|*" artix "*)
+			SYS_FAMILY="arch"; SYS_PM="pacman -S --needed --noconfirm" ;;
+		*" debian "*|*" ubuntu "*|*" mint "*|*" pop "*|*" raspbian "*)
+			SYS_FAMILY="debian"; SYS_PM="apt-get install -y" ;;
+		*" fedora "*|*" rhel "*|*" centos "*|*" rocky "*|*" almalinux "*|*" ol "*)
+			SYS_FAMILY="rpm"; SYS_PM="dnf install -y" ;;
+		*" opensuse "*|*" suse "*|*" sle "*)
+			SYS_FAMILY="suse"; SYS_PM="zypper --non-interactive install" ;;
+		*" void "*) SYS_FAMILY="void"; SYS_PM="xbps-install -y" ;;
+		*" alpine "*) SYS_FAMILY="alpine"; SYS_PM="apk add" ;;
+		*) SYS_FAMILY="desconhecida" ;;
+	esac
+}
+
+# nome do pacote que fornece uma biblioteca, por família de distro
+pkg_for_lib() {
+	case "$SYS_FAMILY:$1" in
+	debian:libX11.so.*)        echo libx11-6 ;;
+	debian:libGL.so.*)         echo libgl1 ;;
+	debian:libGLX.so.*)        echo libglx0 ;;
+	debian:libGLdispatch.so.*) echo libglvnd0 ;;
+	debian:libfontconfig.so.*) echo libfontconfig1 ;;
+	debian:libfreetype.so.*)   echo libfreetype6 ;;
+	debian:libdbus-1.so.*)     echo libdbus-1-3 ;;
+	debian:libsystemd.so.*)    echo libsystemd0 ;;
+	debian:libxcb.so.*)        echo libxcb1 ;;
+	debian:libXext.so.*)       echo libxext6 ;;
+	debian:libXrender.so.*)    echo libxrender1 ;;
+	debian:libpango-1.0.so.*)  echo libpango-1.0-0 ;;
+	debian:libpangocairo-1.0.so.*) echo libpangocairo-1.0-0 ;;
+	debian:libcairo.so.*)      echo libcairo2 ;;
+	debian:libharfbuzz.so.*)   echo libharfbuzz0b ;;
+
+	arch:libX11.so.*)          echo libx11 ;;
+	arch:libGL.so.*)           echo libglvnd ;;
+	arch:libGLX.so.*)          echo libglvnd ;;
+	arch:libfontconfig.so.*)   echo fontconfig ;;
+	arch:libfreetype.so.*)     echo freetype2 ;;
+	arch:libdbus-1.so.*)       echo libdbus ;;
+	arch:libsystemd.so.*)      echo systemd-libs ;;
+	arch:libxcb.so.*)          echo libxcb ;;
+	arch:libXext.so.*)         echo libxext ;;
+	arch:libXrender.so.*)      echo libxrender ;;
+	arch:libpango-1.0.so.*)    echo pango ;;
+	arch:libpangocairo-1.0.so.*) echo pango ;;
+	arch:libcairo.so.*)        echo cairo ;;
+	arch:libharfbuzz.so.*)     echo harfbuzz ;;
+
+	rpm:libX11.so.*)           echo libX11 ;;
+	rpm:libGL.so.*)            echo mesa-libGL ;;
+	rpm:libGLX.so.*)           echo libglvnd ;;
+	rpm:libfontconfig.so.*)    echo fontconfig ;;
+	rpm:libfreetype.so.*)      echo freetype ;;
+	rpm:libdbus-1.so.*)        echo dbus-libs ;;
+	rpm:libsystemd.so.*)       echo systemd-libs ;;
+	rpm:libxcb.so.*)           echo libxcb ;;
+	rpm:libXext.so.*)          echo libXext ;;
+	rpm:libXrender.so.*)       echo libXrender ;;
+	rpm:libpango-1.0.so.*)     echo pango ;;
+	rpm:libpangocairo-1.0.so.*) echo pango ;;
+	rpm:libcairo.so.*)         echo cairo ;;
+	rpm:libharfbuzz.so.*)      echo harfbuzz ;;
+
+	suse:libX11.so.*)          echo libX11 ;;
+	suse:libGL.so.*)           echo libglvnd ;;
+	suse:libfontconfig.so.*)   echo fontconfig ;;
+	suse:libfreetype.so.*)     echo freetype2 ;;
+	suse:libdbus-1.so.*)       echo dbus-1 ;;
+	suse:libsystemd.so.*)      echo libsystemd0 ;;
+	suse:libxcb.so.*)          echo libxcb ;;
+	suse:libXext.so.*)         echo libXext ;;
+	suse:libXrender.so.*)      echo libXrender ;;
+	suse:libpango-1.0.so.*)    echo pango ;;
+	suse:libcairo.so.*)        echo cairo ;;
+	suse:libharfbuzz.so.*)     echo harfbuzz ;;
+
+	alpine:libX11.so.*)        echo libx11 ;;
+	alpine:libGL.so.*)         echo libgl ;;
+	alpine:libfontconfig.so.*) echo fontconfig ;;
+	alpine:libfreetype.so.*)   echo freetype ;;
+	alpine:libdbus-1.so.*)     echo dbus ;;
+	alpine:libxcb.so.*)        echo libxcb ;;
+	alpine:libpango-1.0.so.*)  echo pango ;;
+	alpine:libcairo.so.*)      echo cairo ;;
+	alpine:libharfbuzz.so.*)   echo harfbuzz ;;
+	*) echo "" ;;
+	esac
+}
+
 usage() {
 	cat <<EOF
 Uso: $0 [opções]
 
-  --user            instala só para o usuário atual (~/.local)
+  --user            instala só para o usuário (~/.local), sem root
   --version <ver>   instala uma versão específica (ex: 1.2.10)
   --local <zip>     instala a partir de um pacote já baixado (offline)
   --uninstall       remove TUDO: app, atalho, ícones e as conversas
   -y, --yes         não pergunta confirmação ao remover
   -h, --help        mostra esta ajuda
 
-Sem --user, instala no sistema (requer root; usa sudo automaticamente).
+Padrão: baixa o pacote nativo da distro (pkg.tar.zst no Arch/CachyOS, .deb no
+Debian/Ubuntu, .rpm no Fedora/openSUSE) e deixa o gerenciador resolver as
+dependências. Sem pacote disponível, cai no instalador genérico (zip + /opt).
+Com --user, usa sempre o modo genérico, só na sua conta.
 
 Em qualquer shell (fish, zsh, bash, dash, sh):
   curl -fsSL $INSTALL_URL | bash
@@ -149,6 +265,22 @@ uninstall() {
 		fi
 	fi
 
+	# remove pelo gerenciador se for um pacote nativo (o resto é do gerenciador)
+	local nativo=0
+	case "$SYS_FAMILY" in
+		arch)   pacman -Qq 64gram >/dev/null 2>&1 && nativo=1 ;;
+		debian) dpkg-query -W 64gram >/dev/null 2>&1 && nativo=1 ;;
+		rpm|suse) rpm -q 64gram >/dev/null 2>&1 && nativo=1 ;;
+	esac
+	if [ "$nativo" = 1 ]; then
+		info "removendo o pacote pelo gerenciador do sistema"
+		case "$SYS_FAMILY" in
+			arch)   pacman -Rns --noconfirm 64gram ;;
+			debian) apt-get remove -y 64gram ;;
+			rpm|suse) rpm -e 64gram ;;
+		esac
+	fi
+
 	# cada instalação remove só o que ela criou
 	if [ -e "$prefix_u" ]; then
 		info "removendo instalação do usuário"
@@ -248,7 +380,76 @@ else
 	warn "checksum não verificado (pacote local ou versão fixada)"
 fi
 
+# ------------------------------------------------------- pacote nativo
+# Se existir pacote pronto para a distro, usa o gerenciador do sistema:
+# ele resolve as dependências sozinho (mesma ideia do AUR para Arch).
+pkg_name_for() { # família -> nome do arquivo no release
+	case "$1" in
+	arch)   echo "64gram-$2-1-x86_64.pkg.tar.zst" ;;
+	debian) echo "64gram_${2}_amd64.deb" ;;
+	rpm)    echo "64gram-$2-1.x86_64.rpm" ;;
+	suse)   echo "64gram-$2-1.x86_64.rpm" ;;
+	*)      echo "" ;;
+	esac
+}
+
+install_native() { # $1 = versão; usa o gerenciador do sistema
+	local pkg url pm
+	pkg="$(pkg_name_for "$SYS_FAMILY" "$1")"
+	[ -n "$pkg" ] || return 1
+
+	url="https://github.com/$SELF_REPO/releases/download/v$1/$pkg"
+	info "baixando $pkg"
+	if ! download "$url" "$TMPD/$pkg"; then
+		warn "pacote não encontrado ($url)"
+		return 1
+	fi
+
+	case "$SYS_FAMILY" in
+		arch)   pm="pacman -U --noconfirm" ;;
+		debian) pm="apt-get install -y" ;;
+		rpm)    pm="dnf install -y" ;;
+		suse)   pm="zypper --non-interactive install" ;;
+	esac
+
+	info "instalando com: $pm"
+	# shellcheck disable=SC2086
+	if ! $pm "$TMPD/$pkg"; then
+		die "o gerenciador recusou o pacote $pkg"
+	fi
+
+	if command -v update-desktop-database >/dev/null 2>&1; then
+		update-desktop-database "$DATA_HOME/applications" >/dev/null 2>&1 || true
+	fi
+	return 0
+}
+
 # ---------------------------------------------------------------- instalar
+detect_system
+info "sistema: $SYS_NAME ($SYS_FAMILY)"
+
+# caminho preferencial: pacote nativo do próprio repo, resolvido pelo gerenciador
+if [ "$USER_MODE" = 0 ] && [ -z "$LOCAL" ] && [ -z "$VERSION" ] && [ "$SYS_FAMILY" != "desconhecida" ]; then
+	native_version() {
+		download "https://api.github.com/repos/$SELF_REPO/releases/latest" "$TMPD/rel.json" || return 1
+		awk -F'"' '/"tag_name"/ { print $4; exit }' "$TMPD/rel.json" | sed 's/^v//'
+	}
+	if v="$(native_version)" && [ -n "$v" ]; then
+		if install_native "$v"; then
+			cat <<EOF
+
+✔ 64Gram $v instalado como pacote nativo ($SYS_FAMILY).
+  as dependências foram resolvidas pelo gerenciador do sistema
+
+Execute: 64gram
+Remover: $SELF_PATH --uninstall
+EOF
+			exit 0
+		fi
+	fi
+	info "sem pacote nativo disponível — seguindo com o instalador genérico"
+fi
+
 if command -v unzip >/dev/null 2>&1; then
 	extract() { unzip -q "$1" -d "$2"; }
 elif command -v bsdtar >/dev/null 2>&1; then
@@ -270,6 +471,7 @@ rm -rf "$PREFIX"
 mkdir -p "$PREFIX"
 cp -a "$STAGE/." "$PREFIX/"
 chmod 755 "$PREFIX/Telegram"
+BIN_PATH="$PREFIX/Telegram"
 
 mkdir -p "$BIN_DIR"
 ln -sf "$PREFIX/Telegram" "$BIN_DIR/$APP_CMD"
@@ -323,33 +525,41 @@ if command -v xdg-mime >/dev/null 2>&1; then
 fi
 
 # ---------------------------------------------------------------- checar deps
-PM=""
-if command -v ldd >/dev/null 2>&1; then
-	missing="$(ldd "$PREFIX/Telegram" 2>/dev/null | awk '/not found/ {print $1}' | sort -u)" || true
-	if [ -n "$missing" ]; then
-		warn "bibliotecas ausentes:"
-		for m in $missing; do
-			printf '    %s\n' "$m" >&2
-		done
-		if [ -f /etc/os-release ]; then
-			# shellcheck disable=SC1091
-			. /etc/os-release
-			case "${ID:-}" in
-				arch|cachyos|manjaro|endeavouros|garuda) PM="sudo pacman -S --needed" ;;
-				debian|ubuntu|linuxmint|pop|devuan|mx) PM="sudo apt-get install -y" ;;
-				fedora|rhel|rocky|alma|centos) PM="sudo dnf install -y" ;;
-				opensuse*|sles) PM="sudo zypper install" ;;
-				void) PM="sudo xbps-install" ;;
-				alpine) PM="sudo apk add" ;;
-			esac
-		fi
-		if [ -n "$PM" ]; then
-			warn "instale as dependências com: $PM <pacote>"
-		else
-			warn "instale as dependências pelo gerenciador de pacotes da sua distro"
-		fi
+check_deps() {
+	command -v ldd >/dev/null 2>&1 || return 0
+
+	local missing
+	missing="$(ldd "$BIN_PATH" 2>/dev/null | awk '/not found/ {print $1}' | sort -u)" || true
+	[ -n "$missing" ] || return 0
+
+	local lib pacotes=""
+	for lib in $missing; do
+		local p
+		p="$(pkg_for_lib "$lib")"
+		[ -n "$p" ] && pacotes="$pacotes $p"
+		printf '    %s%s\n' "$lib" "${p:+  →  $p}" >&2
+	done
+	warn "bibliotecas ausentes (veja acima)"
+
+	case " $pacotes " in *"  "*) ;; *) die "pacote desconhecido para estas bibliotecas: $pacotes" ;; esac
+	pacotes="${pacotes# }"
+
+	if [ -z "$SYS_PM" ]; then
+		warn "gerenciador de pacotes não reconhecido — instale manualmente: $pacotes"
+		return 0
 	fi
-fi
+
+	if [ "$SYS_ROOT" = 1 ]; then
+		info "instalando dependências: $SYS_PM $pacotes"
+		# shellcheck disable=SC2086
+		$SYS_PM $pacotes || warn "algum pacote não pôde ser instalado — confira acima"
+	else
+		warn "rode com sudo para instalar as dependências, ou:"
+		warn "  sudo $SYS_PM $pacotes"
+	fi
+}
+
+check_deps
 
 cat <<EOF
 
