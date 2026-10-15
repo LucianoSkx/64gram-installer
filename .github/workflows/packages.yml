@@ -83,10 +83,12 @@ jobs:
           set -euo pipefail
           ls -l dist
           for f in dist/*.deb dist/*.rpm dist/*.pkg.tar.zst dist/*.AppImage; do
+            magic="$(head -c 4 "$f" | od -An -tx1 | tr -d ' ')"
             case "$f" in
               *.deb) ar t "$f" | grep -q '^control.tar.gz$' ;;
-              *.rpm|*.pkg.tar.zst) [ "$(head -c 4 "$f" | od -An -tx1 | tr -d ' ')" = "edabeedb" ] ;;
-              *.AppImage) [ "$(head -c 4 "$f" | od -An -tx1 | tr -d ' ')" = "edabeedb" ] && [ -x "$f" ] ;;
+              *.rpm) [ "$magic" = "edabeedb" ] ;;
+              *.pkg.tar.zst) [ "$magic" = "28b52ffd" ] ;;
+              *.AppImage) [ "$magic" = "edabeedb" ] && [ -x "$f" ] ;;
             esac
           done
           (cd dist && sha256sum -c SHA256SUMS >/dev/null)
