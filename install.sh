@@ -315,6 +315,42 @@ if [ "$UNINSTALL" = 1 ]; then
 	exit 0
 fi
 
+# ---------------------------------------------------------- sistema + nativo
+# Reconhece a distro e prefere o pacote nativo: o gerenciador do sistema resolve
+# as dependências (no Arch/CachyOS é o pacote do AUR, como manda a tradição).
+detect_system
+info "sistema: $SYS_NAME ($SYS_FAMILY)"
+
+try_native() {
+	local v helper
+	case "$SYS_FAMILY" in
+		arch)
+			for helper in paru yay pikaur; do
+				command -v "$helper" >/dev/null 2>&1 || continue
+				info "instalando pelo AUR com $helper (64gram-desktop-bin)"
+				"$helper" -S --needed --noconfirm 64gram-desktop-bin && return 0
+				warn "$helper não conseguiu instalar"
+			done
+			return 1 ;;
+		debian|rpm|suse) ;;
+		*) return 1 ;;
+	esac
+
+	download "https://api.github.com/repos/$SELF_REPO/releases/latest" "$TMPD/rel.json" || return 1
+	v="$(awk -F'"' '/"tag_name"/ { print $4; exit }' "$TMPD/rel.json" | sed 's/^v//')"
+	[ -n "$v" ] && [ "$v" != "null" ] || return 1
+	install_native "$v"
+}
+
+if [ "$USER_MODE" = 0 ] && [ -z "$LOCAL" ] && [ -z "$VERSION" ]; then
+	if try_native; then
+		info "64Gram instalado pelo gerenciador do sistema."
+		printf 'Execute: 64gram\nRemover: %s --uninstall\n' "${UPDATE_HINT:-$SELF_PATH}"
+		exit 0
+	fi
+	info "sem pacote nativo disponível — seguindo com o instalador genérico"
+fi
+
 # ---------------------------------------------------------------- versão
 if [ -n "$LOCAL" ]; then
 	[ -f "$LOCAL" ] || die "arquivo não encontrado: $LOCAL"
@@ -440,31 +476,6 @@ install_native() { # $1 = versão; usa o gerenciador do sistema
 }
 
 # ---------------------------------------------------------------- instalar
-detect_system
-info "sistema: $SYS_NAME ($SYS_FAMILY)"
-
-# caminho preferencial: pacote nativo, resolvido pelo gerenciador do sistema
-if [ "$USER_MODE" = 0 ] && [ -z "$LOCAL" ] && [ -z "$VERSION" ] && [ "$SYS_FAMILY" != "desconhecida" ]; then
-	native_version() {
-		download "https://api.github.com/repos/$SELF_REPO/releases/latest" "$TMPD/rel.json" || return 1
-		awk -F'"' '/"tag_name"/ { print $4; exit }' "$TMPD/rel.json" | sed 's/^v//'
-	}
-	native_run() {
-		if [ "$SYS_FAMILY" = "arch" ]; then
-			install_native "" && return 0
-		elif v="$(native_version)" && [ -n "$v" ]; then
-			install_native "$v" && return 0
-		fi
-		return 1
-	}
-	if native_run; then
-		info "64Gram instalado pelo gerenciador do sistema."
-		printf 'Execute: 64gram\nRemover: %s --uninstall\n' "${UPDATE_HINT:-$SELF_PATH}"
-		exit 0
-	fi
-	info "sem pacote nativo disponível — seguindo com o instalador genérico"
-fi
-
 if command -v unzip >/dev/null 2>&1; then
 	extract() { unzip -q "$1" -d "$2"; }
 elif command -v bsdtar >/dev/null 2>&1; then
