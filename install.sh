@@ -231,8 +231,9 @@ esac
 # ---------------------------------------------------------- escolha do modo
 # O script pergunta (quando há terminal) e já indica o recomendado para a máquina.
 recomendo_sistema() {
-	[ "$SYS_ROOT" = 1 ] && return 0                       # já é root
-	sudo -n true 2>/dev/null && return 0                  # sudo sem senha
+	# só quando já se é root: qualquer outro caso implica pedir senha,
+	# então o modo usuário (sem senha) é o recomendado — o padrão das distros.
+	[ "$SYS_ROOT" = 1 ] && return 0
 	return 1
 }
 
@@ -261,7 +262,7 @@ escolher_modo() {
 	printf '     app em /opt/64gram, gerenciado pelo sistema\n\n' > "$tty"
 
 	if [ "$sistema" = 1 ]; then
-		printf 'Escolha [1/2] (recomendado: 2 — aqui o sudo não pede senha): ' > "$tty"
+		printf 'Escolha [1/2] (recomendado: 2 — você já está como root): ' > "$tty"
 	else
 		printf 'Escolha [1/2] (recomendado: 1 — não pede senha): ' > "$tty"
 	fi
