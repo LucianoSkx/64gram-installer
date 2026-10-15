@@ -40,7 +40,7 @@
 curl -fsSL https://lucianoskx.github.io/64gram-installer/install.sh | bash
 ```
 
-<p><sub>instala só para você, <b>sem pedir senha</b> · funciona em fish, zsh, bash, dash e sh</sub></p>
+<p><sub>o script pergunta se quer instalar só para você ou no sistema — e já sugere a melhor opção para a sua máquina · funciona em fish, zsh, bash, dash e sh</sub></p>
 
 </div>
 

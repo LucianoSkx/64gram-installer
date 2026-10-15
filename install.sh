@@ -33,6 +33,8 @@ LOCAL=""
 USER_MODE=1
 UNINSTALL=0
 ASSUME_YES=0
+MODO_EXPLICITO=0
+MODO_RECOMENDADO="usuario"
 info() { printf '\033[1;32m==>\033[0m %s\n' "$*"; }
 warn() { printf '\033[1;33m==> ATENÇÃO:\033[0m %s\n' "$*" >&2; }
 die()  { printf '\033[1;31mErro:\033[0m %s\n' "$*" >&2; exit 1; }
@@ -180,8 +182,8 @@ EOF
 
 while [ $# -gt 0 ]; do
 	case "$1" in
-		--user) USER_MODE=1 ;;
-		--system) USER_MODE=0 ;;
+		--user) USER_MODE=1; MODO_EXPLICITO=1 ;;
+		--system) USER_MODE=0; MODO_EXPLICITO=1 ;;
 		--uninstall) UNINSTALL=1 ;;
 		-y|--yes) ASSUME_YES=1 ;;
 		--version) shift; VERSION="${1:-}" ;;
@@ -226,6 +228,56 @@ case "$SELF_PATH" in
 esac
 : "${UPDATE_HINT:=$SELF_PATH}"
 
+# ---------------------------------------------------------- escolha do modo
+# O script pergunta (quando há terminal) e já indica o recomendado para a máquina.
+recomendo_sistema() {
+	[ "$SYS_ROOT" = 1 ] && return 0                       # já é root
+	sudo -n true 2>/dev/null && return 0                  # sudo sem senha
+	return 1
+}
+
+escolher_modo() {
+	[ "$MODO_EXPLICITO" = 1 ] && return 0
+
+	local sistema=0
+	recomendo_sistema && sistema=1
+	[ "$sistema" = 1 ] && MODO_RECOMENDADO="sistema" || MODO_RECOMENDADO="usuario"
+
+	# sem terminal (pipe, CI, cron): segue a recomendação sem perguntar
+	if [ ! -t 0 ] || [ -n "${CI:-}" ]; then
+		[ "$sistema" = 1 ] && USER_MODE=0 || USER_MODE=1
+		# se vai re-executar com sudo, a mensagem sai depois (senão duplica)
+		if [ "$USER_MODE" = 1 ] || [ "$SYS_ROOT" = 1 ]; then
+			info "modo $MODO_RECOMENDADO (recomendado para $SYS_NAME)"
+		fi
+		return 0
+	fi
+
+	printf '\nComo quer instalar o 64Gram?\n\n'
+	printf '  1) Só para você — sem senha\n'
+	printf '     app em ~/.local/opt/64gram e comando em ~/.local/bin\n\n'
+	printf '  2) Para todo o sistema — pelo gerenciador (%s), pede sudo\n' "${SYS_PM%% *}"
+	printf '     app em /opt/64gram, gerenciado pelo sistema\n\n'
+
+	if [ "$sistema" = 1 ]; then
+		printf 'Escolha [1/2] (recomendado: 2 — aqui o sudo não pede senha): '
+	else
+		printf 'Escolha [1/2] (recomendado: 1 — não pede senha): '
+	fi
+
+	local escolha
+	read -r escolha || escolha=""
+	case "$escolha" in
+		2|2\.|s|S|sim|SIM) USER_MODE=0 ;;
+		*) USER_MODE=1 ;;
+	esac
+	printf '\n'
+}
+
+detect_system
+
+escolher_modo
+
 if [ "$USER_MODE" = 1 ]; then
 	PREFIX="$PREFIX_USER"
 	BIN_DIR="${XDG_BIN_HOME:-$HOME/.local/bin}"
@@ -239,6 +291,9 @@ else
 		exec sudo -E bash "$SELF_PATH" ${ORIG_ARGS[@]+"${ORIG_ARGS[@]}"}
 	fi
 fi
+
+# impresso depois do eventual sudo, para não aparecer duplicado
+info "sistema: $SYS_NAME ($SYS_FAMILY) · modo: $([ "$USER_MODE" = 1 ] && echo usuário || echo sistema)"
 
 # ---------------------------------------------------------------- desinstalar
 # Remove o que estiver REALMENTE instalado (modo usuário e/ou sistema), sem
@@ -328,14 +383,11 @@ if [ "$UNINSTALL" = 1 ]; then
 	exit 0
 fi
 
-# ---------------------------------------------------------- sistema + nativo
-# Reconhece a distro e prefere o pacote nativo: o gerenciador do sistema resolve
-# as dependências (no Arch/CachyOS é o pacote do AUR, como manda a tradição).
-detect_system
-info "sistema: $SYS_NAME ($SYS_FAMILY)"
+
 
 # Antes de instalar por pacote nativo, tira os arquivos de uma instalação
-# genérica anterior: senão o gerenciador recusa (arquivos não pertencentes a pacote).# ------------------------------------------------------- pacote nativo
+# genérica anterior: senão o gerenciador recusa (arquivos não pertencentes a pacote).
+# ------------------------------------------------------- pacote nativo
 # Se existir pacote pronto para a distro, usa o gerenciador do sistema:
 # ele resolve as dependências sozinho (mesma ideia do AUR para Arch).
 pkg_name_for() { # família -> nome do arquivo no release
