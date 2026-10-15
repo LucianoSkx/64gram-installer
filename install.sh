@@ -207,7 +207,11 @@ download() { # url destino
 if [ ! -f "$0" ] || [ "${0#/dev/fd/}" != "$0" ]; then
 	info "obtendo o instalador (execução via pipe)"
 	SELF="$TMPD/install.sh"
-	download "https://raw.githubusercontent.com/$SELF_REPO/main/install.sh" "$SELF"
+	# re-baixar pelo mesmo link recebido: evita que um CDN velho do raw
+	# sobrescreva a versão que o usuário acabou de executar
+	download "$INSTALL_URL" "$SELF" ||
+		download "https://raw.githubusercontent.com/$SELF_REPO/main/install.sh" "$SELF" ||
+		die "não consegui baixar o instalador"
 	export UPDATE_HINT="curl -fsSL $INSTALL_URL | bash"
 	exec bash "$SELF" ${ORIG_ARGS[@]+"${ORIG_ARGS[@]}"}
 fi
