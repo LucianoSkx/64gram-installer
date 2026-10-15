@@ -394,7 +394,22 @@ pkg_name_for() { # família -> nome do arquivo no release
 }
 
 install_native() { # $1 = versão; usa o gerenciador do sistema
-	local pkg url pm
+	local pkg url pm helper
+
+	# Arch/CachyOS: o 64Gram é distribuído como pacote do AUR, como manda a tradição
+	if [ "$SYS_FAMILY" = "arch" ]; then
+		for helper in paru yay pikaur; do
+			command -v "$helper" >/dev/null 2>&1 || continue
+			info "instalando pelo AUR com $helper (64gram-desktop-bin)"
+			if "$helper" -S --needed --noconfirm 64gram-desktop-bin; then
+				return 0
+			fi
+			warn "$helper não conseguiu instalar"
+		done
+		warn "sem helper de AUR (paru/yay/pikaur) — usando o instalador genérico"
+		return 1
+	fi
+
 	pkg="$(pkg_name_for "$SYS_FAMILY" "$1")"
 	[ -n "$pkg" ] || return 1
 
@@ -428,24 +443,24 @@ install_native() { # $1 = versão; usa o gerenciador do sistema
 detect_system
 info "sistema: $SYS_NAME ($SYS_FAMILY)"
 
-# caminho preferencial: pacote nativo do próprio repo, resolvido pelo gerenciador
+# caminho preferencial: pacote nativo, resolvido pelo gerenciador do sistema
 if [ "$USER_MODE" = 0 ] && [ -z "$LOCAL" ] && [ -z "$VERSION" ] && [ "$SYS_FAMILY" != "desconhecida" ]; then
 	native_version() {
 		download "https://api.github.com/repos/$SELF_REPO/releases/latest" "$TMPD/rel.json" || return 1
 		awk -F'"' '/"tag_name"/ { print $4; exit }' "$TMPD/rel.json" | sed 's/^v//'
 	}
-	if v="$(native_version)" && [ -n "$v" ]; then
-		if install_native "$v"; then
-			cat <<EOF
-
-✔ 64Gram $v instalado como pacote nativo ($SYS_FAMILY).
-  as dependências foram resolvidas pelo gerenciador do sistema
-
-Execute: 64gram
-Remover: $SELF_PATH --uninstall
-EOF
-			exit 0
+	native_run() {
+		if [ "$SYS_FAMILY" = "arch" ]; then
+			install_native "" && return 0
+		elif v="$(native_version)" && [ -n "$v" ]; then
+			install_native "$v" && return 0
 		fi
+		return 1
+	}
+	if native_run; then
+		info "64Gram instalado pelo gerenciador do sistema."
+		printf 'Execute: 64gram\nRemover: %s --uninstall\n' "${UPDATE_HINT:-$SELF_PATH}"
+		exit 0
 	fi
 	info "sem pacote nativo disponível — seguindo com o instalador genérico"
 fi
