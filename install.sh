@@ -288,29 +288,34 @@ uninstall() {
 	# cada instalação remove só o que ela criou
 	if [ -e "$prefix_u" ]; then
 		info "removendo instalação do usuário"
-		rm -f "$home/.local/bin/$APP_CMD"
-		rm -f "$home/.local/share/applications/$DESKTOP_ID"
+		rm -f "$home/.local/bin/$APP_CMD" 2>/dev/null || true
+		rm -f "$home/.local/share/applications/$DESKTOP_ID" 2>/dev/null || true
 		for s in $ICON_SIZES; do
-			rm -f "$home/.local/share/icons/hicolor/${s}x${s}/apps/$ICON_NAME.png"
+			rm -f "$home/.local/share/icons/hicolor/${s}x${s}/apps/$ICON_NAME.png" 2>/dev/null || true
 		done
-		rm -rf "$prefix_u"
+		rm -rf "$prefix_u" 2>/dev/null || true
 		command -v update-desktop-database >/dev/null 2>&1 && \
 			update-desktop-database "$home/.local/share/applications" >/dev/null 2>&1 || true
 	fi
 
 	if [ -e "$prefix_s" ]; then
-		info "removendo instalação do sistema"
-		rm -f "$BIN_DIR/$APP_CMD"
-		rm -f "$DATA_HOME/applications/$DESKTOP_ID"
-		for s in $ICON_SIZES; do
-			rm -f "$DATA_HOME/icons/hicolor/${s}x${s}/apps/$ICON_NAME.png"
-		done
-		rm -rf "$prefix_s"
-		command -v update-desktop-database >/dev/null 2>&1 && \
-			update-desktop-database "$DATA_HOME/applications" >/dev/null 2>&1 || true
+		if [ "$SYS_ROOT" != 1 ]; then
+			warn "existe também uma instalação do sistema em $prefix_s"
+			warn "para removê-la, rode a desinstalação sem --user (o script pede sudo)"
+		else
+			info "removendo instalação do sistema"
+			rm -f "$BIN_DIR/$APP_CMD" 2>/dev/null || true
+			rm -f "$DATA_HOME/applications/$DESKTOP_ID" 2>/dev/null || true
+			for s in $ICON_SIZES; do
+				rm -f "$DATA_HOME/icons/hicolor/${s}x${s}/apps/$ICON_NAME.png" 2>/dev/null || true
+			done
+			rm -rf "$prefix_s" 2>/dev/null || true
+			command -v update-desktop-database >/dev/null 2>&1 && \
+				update-desktop-database "$DATA_HOME/applications" >/dev/null 2>&1 || true
+		fi
 	fi
 
-	rm -rf "$dados_u"
+	rm -rf "$dados_u" 2>/dev/null || true
 	info "64Gram removido (app e conversas)."
 }
 
@@ -408,7 +413,7 @@ try_native() {
 if [ "$USER_MODE" = 0 ] && [ -z "$LOCAL" ] && [ -z "$VERSION" ]; then
 	if try_native; then
 		info "64Gram instalado pelo gerenciador do sistema."
-		printf 'Execute: 64gram\nRemover: %s -s -- --uninstall\n' "${UPDATE_HINT:-$SELF_PATH}"
+		printf 'Execute: 64gram\nRemover: curl -fsSL %s/uninstall.sh | bash\n' "https://lucianoskx.github.io/64gram-installer"
 		exit 0
 	fi
 	info "sem pacote nativo disponível — seguindo com o instalador genérico"
@@ -600,7 +605,7 @@ cat <<EOF
 
 Execute:        $APP_CMD
 Atualizar:      ${UPDATE_HINT:-$SELF_PATH}
-Remover:        ${UPDATE_HINT:-$SELF_PATH} -s -- --uninstall
+Remover:        curl -fsSL https://lucianoskx.github.io/64gram-installer/uninstall.sh | bash
 EOF
 
 if [ "$USER_MODE" = 1 ]; then
