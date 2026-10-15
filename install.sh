@@ -243,35 +243,37 @@ escolher_modo() {
 	recomendo_sistema && sistema=1
 	[ "$sistema" = 1 ] && MODO_RECOMENDADO="sistema" || MODO_RECOMENDADO="usuario"
 
-	# sem terminal (pipe, CI, cron): segue a recomendação sem perguntar
-	if [ ! -t 0 ] || [ -n "${CI:-}" ]; then
+	# com "curl ... | bash" o stdin é o pipe: o terminal de verdade é o /dev/tty.
+	# se não houver terminal (cron, CI, container sem tty), segue a recomendação.
+	local tty=""
+	[ -n "${CI:-}" ] || tty="$( [ -e /dev/tty ] && echo /dev/tty )"
+
+	if [ -z "$tty" ]; then
 		[ "$sistema" = 1 ] && USER_MODE=0 || USER_MODE=1
-		# se vai re-executar com sudo, a mensagem sai depois (senão duplica)
-		if [ "$USER_MODE" = 1 ] || [ "$SYS_ROOT" = 1 ]; then
-			info "modo $MODO_RECOMENDADO (recomendado para $SYS_NAME)"
-		fi
+		info "modo $MODO_RECOMENDADO (recomendado para $SYS_NAME)"
 		return 0
 	fi
 
-	printf '\nComo quer instalar o 64Gram?\n\n'
-	printf '  1) Só para você — sem senha\n'
-	printf '     app em ~/.local/opt/64gram e comando em ~/.local/bin\n\n'
-	printf '  2) Para todo o sistema — pelo gerenciador (%s), pede sudo\n' "${SYS_PM%% *}"
-	printf '     app em /opt/64gram, gerenciado pelo sistema\n\n'
+	printf '\nComo quer instalar o 64Gram?\n\n' > "$tty"
+	printf '  1) Só para você — sem senha\n' > "$tty"
+	printf '     app em ~/.local/opt/64gram e comando em ~/.local/bin\n\n' > "$tty"
+	printf '  2) Para todo o sistema — pelo gerenciador (%s), pede sudo\n' "${SYS_PM%% *}" > "$tty"
+	printf '     app em /opt/64gram, gerenciado pelo sistema\n\n' > "$tty"
 
 	if [ "$sistema" = 1 ]; then
-		printf 'Escolha [1/2] (recomendado: 2 — aqui o sudo não pede senha): '
+		printf 'Escolha [1/2] (recomendado: 2 — aqui o sudo não pede senha): ' > "$tty"
 	else
-		printf 'Escolha [1/2] (recomendado: 1 — não pede senha): '
+		printf 'Escolha [1/2] (recomendado: 1 — não pede senha): ' > "$tty"
 	fi
 
 	local escolha
-	read -r escolha || escolha=""
+	read -r escolha < "$tty" || escolha=""
 	case "$escolha" in
-		2|2\.|s|S|sim|SIM) USER_MODE=0 ;;
-		*) USER_MODE=1 ;;
+		1|1\.|u|U) USER_MODE=1 ;;
+		2|2\.|s|S) USER_MODE=0 ;;
+		*) [ "$sistema" = 1 ] && USER_MODE=0 || USER_MODE=1 ;;
 	esac
-	printf '\n'
+	printf '\n' > "$tty"
 }
 
 detect_system
