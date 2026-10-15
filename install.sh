@@ -167,7 +167,7 @@ Uso: $0 [opções]
 
 Sem opção, o script pergunta:
 
-  1) pacote do sistema  (recomendado) — pelo gerenciador, pede a senha do sudo
+  1) pacote do sistema  (recomendado) — pelo gerenciador, sudo pode pedir senha
   2) AppImage            — arquivo único em ~/Downloads, não instala no sistema
   3) pacote zip          — instala só para você, sem senha (em ~/.local)
 
@@ -311,14 +311,14 @@ escolher_modo() {
 	if [ -z "$tty" ]; then
 		APP_MODE="sistema"
 		USER_MODE=0
-		info "modo sistema (recomendado) — vai pedir a senha do sudo"
+		info "modo sistema (recomendado) — sudo pode pedir senha"
 		return 0
 	fi
 
 	local pm="${SYS_PM%% *}"
 	printf '\nComo quer instalar o 64Gram?\n\n' > "$tty"
 	printf '   1)  pacote do sistema    \033[1;33m★ recomendado\033[0m\n' > "$tty"
-	printf '        pelo %s, em /opt/64gram — pede a senha do sudo\n\n' "$pm" > "$tty"
+	printf '        pelo %s, em /opt/64gram (sudo pode pedir senha)\n\n' "$pm" > "$tty"
 	printf '   2)  appimage\n' > "$tty"
 	printf '        arquivo único em ~/Downloads, não mexe no sistema\n\n' > "$tty"
 	printf '   3)  pacote zip\n' > "$tty"
@@ -356,6 +356,13 @@ else
 	DATA_HOME="/usr/share"
 	if [ "$(id -u)" != "0" ]; then
 		command -v sudo >/dev/null 2>&1 || die "sem sudo: escolha 2 (appimage) ou 3 (zip) no menu"
+		# limpa o cache de credenciais: em hosts com senha, evita que timestamp de 5min (sudo) silencie a pergunta
+		sudo -k 2>/dev/null || true
+		if sudo -n true 2>/dev/null; then
+			info "sudo sem senha nesta máquina (NOPASSWD) — nada será pedido"
+		else
+			info "digite sua senha do sudo abaixo"
+		fi
 		# leva a escolha junto: senão o script re-perguntaria depois do sudo
 		exec sudo -E bash "$SELF_PATH" --mode="$APP_MODE" ${ORIG_ARGS[@]+"${ORIG_ARGS[@]}"}
 	fi
