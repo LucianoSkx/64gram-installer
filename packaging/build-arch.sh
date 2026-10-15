@@ -108,6 +108,11 @@ PKG
 echo "==> makepkg (64gram $VERSION)"
 ( cd "$WORK" && makepkg -f --noconfirm --nodeps >/dev/null )
 
+# o makepkg também gera o pacote -debug quando a distro pede: não é nosso
+rm -f "$WORK"/64gram-debug-*.pkg.tar.zst
+
 mkdir -p "$OUT"
-cp "$WORK"/64gram-*.pkg.tar.zst "$OUT/"
-echo "$OUT/$(cd "$OUT" && ls 64gram-*.pkg.tar.zst | head -1)"
+rm -f "$OUT"/64gram-debug-*.pkg.tar.zst
+pkg="$(cd "$WORK" && ls 64gram-*.pkg.tar.zst | head -1)"
+cp "$WORK/$pkg" "$OUT/"
+echo "$OUT/$pkg"
