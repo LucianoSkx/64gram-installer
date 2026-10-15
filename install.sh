@@ -198,6 +198,8 @@ done
 
 TMPD="$(mktemp -d)"
 trap 'rm -rf "$TMPD"' EXIT
+# Ctrl+C / kill no meio da escolha: sai limpo, sem instalar nada
+trap 'printf "\n"; info "cancelado — nada foi instalado"; exit 130' INT TERM
 
 download() { # url destino
 	if command -v curl >/dev/null 2>&1; then
@@ -307,13 +309,14 @@ escolher_modo() {
 
 	local pm="${SYS_PM%% *}"
 	printf '\nComo quer instalar o 64Gram?\n\n' > "$tty"
-	printf '  1) Pacote do sistema  (recomendado)\n' > "$tty"
-	printf '     pelo gerenciador (%s), em /opt/64gram — vai pedir a senha do sudo\n\n' "$pm" > "$tty"
-	printf '  2) AppImage\n' > "$tty"
-	printf '     arquivo único em ~/Downloads, não instala nada no sistema\n\n' > "$tty"
-	printf '  3) Pacote zip\n' > "$tty"
-	printf '     instala só para você, sem senha (em ~/.local)\n\n' > "$tty"
-	printf 'Escolha [1/2/3] (recomendado: 1): ' > "$tty"
+	printf '   1)  pacote do sistema    \033[1;33m★ recomendado\033[0m\n' > "$tty"
+	printf '        pelo %s, em /opt/64gram — pede a senha do sudo\n\n' "$pm" > "$tty"
+	printf '   2)  appimage\n' > "$tty"
+	printf '        arquivo único em ~/Downloads, não mexe no sistema\n\n' > "$tty"
+	printf '   3)  pacote zip\n' > "$tty"
+	printf '        só para você, em ~/.local, sem senha\n\n' > "$tty"
+	printf '   0)  cancelar\n\n' > "$tty"
+	printf 'Escolha [0-3] (Enter = 1): ' > "$tty"
 
 	local escolha=""
 	# "|| true" mantém o que foi lido quando o read vem sem newline final
@@ -321,6 +324,10 @@ escolher_modo() {
 	case "$escolha" in
 		2|2\.|appimage|APPIMAGE|AppImage) APP_MODE="appimage" ;;
 		3|3\.|zip|ZIP)                     APP_MODE="zip"; USER_MODE=1 ;;
+		0|0\.|c|C|n|N|q|Q|nao|Nao|NAO|cancelar|CANCELAR)
+			printf '\n' > "$tty"
+			info "cancelado — nada foi instalado"
+			exit 0 ;;
 		1|1\.|sistema|s|S)                 APP_MODE="sistema"; USER_MODE=0 ;;
 		*)                                 APP_MODE="sistema"; USER_MODE=0 ;;
 	esac
