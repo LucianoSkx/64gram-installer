@@ -326,7 +326,66 @@ detect_system
 info "sistema: $SYS_NAME ($SYS_FAMILY)"
 
 # Antes de instalar por pacote nativo, tira os arquivos de uma instalação
-# genérica anterior: senão o gerenciador recusa (arquivos não pertencentes a pacote).
+# genérica anterior: senão o gerenciador recusa (arquivos não pertencentes a pacote).# ------------------------------------------------------- pacote nativo
+# Se existir pacote pronto para a distro, usa o gerenciador do sistema:
+# ele resolve as dependências sozinho (mesma ideia do AUR para Arch).
+pkg_name_for() { # família -> nome do arquivo no release
+	case "$1" in
+	arch)   echo "64gram-$2-1-x86_64.pkg.tar.zst" ;;
+	debian) echo "64gram_${2}_amd64.deb" ;;
+	rpm)    echo "64gram-$2-1.x86_64.rpm" ;;
+	suse)   echo "64gram-$2-1.x86_64.rpm" ;;
+	*)      echo "" ;;
+	esac
+}
+
+install_native() { # $1 = versão; usa o gerenciador do sistema
+	local pkg url pm helper
+
+	# Arch/CachyOS: o 64Gram é distribuído como pacote do AUR, como manda a tradição
+	if [ "$SYS_FAMILY" = "arch" ]; then
+		for helper in paru yay pikaur; do
+			command -v "$helper" >/dev/null 2>&1 || continue
+			info "instalando pelo AUR com $helper (64gram-desktop-bin)"
+			if "$helper" -S --needed --noconfirm 64gram-desktop-bin; then
+				return 0
+			fi
+			warn "$helper não conseguiu instalar"
+		done
+		warn "sem helper de AUR (paru/yay/pikaur) — usando o instalador genérico"
+		return 1
+	fi
+
+	pkg="$(pkg_name_for "$SYS_FAMILY" "$1")"
+	[ -n "$pkg" ] || return 1
+
+	url="https://github.com/$SELF_REPO/releases/download/v$1/$pkg"
+	info "baixando $pkg"
+	if ! download "$url" "$TMPD/$pkg"; then
+		warn "pacote não encontrado ($url)"
+		return 1
+	fi
+
+	case "$SYS_FAMILY" in
+		arch)   pm="pacman -U --noconfirm" ;;
+		debian) pm="apt-get install -y" ;;
+		rpm)    pm="dnf install -y" ;;
+		suse)   pm="zypper --non-interactive install" ;;
+	esac
+
+	info "instalando com: $pm"
+	# shellcheck disable=SC2086
+	if ! $pm "$TMPD/$pkg"; then
+		die "o gerenciador recusou o pacote $pkg"
+	fi
+
+	if command -v update-desktop-database >/dev/null 2>&1; then
+		update-desktop-database "$DATA_HOME/applications" >/dev/null 2>&1 || true
+	fi
+	return 0
+}
+
+
 cleanup_generic() {
 	local s
 
@@ -434,64 +493,6 @@ else
 	warn "checksum não verificado (pacote local ou versão fixada)"
 fi
 
-# ------------------------------------------------------- pacote nativo
-# Se existir pacote pronto para a distro, usa o gerenciador do sistema:
-# ele resolve as dependências sozinho (mesma ideia do AUR para Arch).
-pkg_name_for() { # família -> nome do arquivo no release
-	case "$1" in
-	arch)   echo "64gram-$2-1-x86_64.pkg.tar.zst" ;;
-	debian) echo "64gram_${2}_amd64.deb" ;;
-	rpm)    echo "64gram-$2-1.x86_64.rpm" ;;
-	suse)   echo "64gram-$2-1.x86_64.rpm" ;;
-	*)      echo "" ;;
-	esac
-}
-
-install_native() { # $1 = versão; usa o gerenciador do sistema
-	local pkg url pm helper
-
-	# Arch/CachyOS: o 64Gram é distribuído como pacote do AUR, como manda a tradição
-	if [ "$SYS_FAMILY" = "arch" ]; then
-		for helper in paru yay pikaur; do
-			command -v "$helper" >/dev/null 2>&1 || continue
-			info "instalando pelo AUR com $helper (64gram-desktop-bin)"
-			if "$helper" -S --needed --noconfirm 64gram-desktop-bin; then
-				return 0
-			fi
-			warn "$helper não conseguiu instalar"
-		done
-		warn "sem helper de AUR (paru/yay/pikaur) — usando o instalador genérico"
-		return 1
-	fi
-
-	pkg="$(pkg_name_for "$SYS_FAMILY" "$1")"
-	[ -n "$pkg" ] || return 1
-
-	url="https://github.com/$SELF_REPO/releases/download/v$1/$pkg"
-	info "baixando $pkg"
-	if ! download "$url" "$TMPD/$pkg"; then
-		warn "pacote não encontrado ($url)"
-		return 1
-	fi
-
-	case "$SYS_FAMILY" in
-		arch)   pm="pacman -U --noconfirm" ;;
-		debian) pm="apt-get install -y" ;;
-		rpm)    pm="dnf install -y" ;;
-		suse)   pm="zypper --non-interactive install" ;;
-	esac
-
-	info "instalando com: $pm"
-	# shellcheck disable=SC2086
-	if ! $pm "$TMPD/$pkg"; then
-		die "o gerenciador recusou o pacote $pkg"
-	fi
-
-	if command -v update-desktop-database >/dev/null 2>&1; then
-		update-desktop-database "$DATA_HOME/applications" >/dev/null 2>&1 || true
-	fi
-	return 0
-}
 
 # ---------------------------------------------------------------- instalar
 if command -v unzip >/dev/null 2>&1; then
