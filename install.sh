@@ -29,6 +29,7 @@ VERSION=""
 LOCAL=""
 USER_MODE=0
 UNINSTALL=0
+ASSUME_YES=0
 info() { printf '\033[1;32m==>\033[0m %s\n' "$*"; }
 warn() { printf '\033[1;33m==> ATENÇÃO:\033[0m %s\n' "$*" >&2; }
 die()  { printf '\033[1;31mErro:\033[0m %s\n' "$*" >&2; exit 1; }
@@ -40,7 +41,8 @@ Uso: $0 [opções]
   --user            instala só para o usuário atual (~/.local)
   --version <ver>   instala uma versão específica (ex: 1.2.10)
   --local <zip>     instala a partir de um pacote já baixado (offline)
-  --uninstall       remove a instalação
+  --uninstall       remove TUDO: app, atalho, ícones e as conversas
+  -y, --yes         não pergunta confirmação ao remover
   -h, --help        mostra esta ajuda
 
 Sem --user, instala no sistema (requer root; usa sudo automaticamente).
@@ -59,6 +61,7 @@ while [ $# -gt 0 ]; do
 	case "$1" in
 		--user) USER_MODE=1 ;;
 		--uninstall) UNINSTALL=1 ;;
+		-y|--yes) ASSUME_YES=1 ;;
 		--version) shift; VERSION="${1:-}" ;;
 		--local) shift; LOCAL="${1:-}" ;;
 		-h|--help) usage ;;
@@ -113,6 +116,30 @@ fi
 
 # ---------------------------------------------------------------- desinstalar
 uninstall() {
+	local data_dir="$DATA_USER"
+
+	# na instalação do sistema os dados são do usuário que chamou, não do root
+	if [ "$USER_MODE" = 0 ] && [ -n "${SUDO_USER:-}" ]; then
+		local home
+		home="$(getent passwd "$SUDO_USER" | cut -d: -f6)"
+		[ -n "$home" ] && data_dir="$home/.local/share/64Gram"
+	fi
+
+	if [ -d "$data_dir" ]; then
+		if [ "$ASSUME_YES" = 0 ] && [ -t 0 ]; then
+			printf '\nIsto apaga TUDO do 64Gram, incluindo as conversas em:\n  %s\n\nContinuar? [s/N] ' "$data_dir" >&2
+			read -r resposta || resposta=""
+			case "$resposta" in
+				s|S|y|Y|sim|SIM) ;;
+				*) info "cancelado — nada foi removido"; return 0 ;;
+			esac
+		else
+			warn "removendo tudo (incluindo conversas): $data_dir"
+		fi
+	else
+		info "nenhuma conversa encontrada em $data_dir"
+	fi
+
 	info "removendo $DESKTOP_ID"
 	rm -f "$DATA_HOME/applications/$DESKTOP_ID"
 	local s
@@ -121,13 +148,14 @@ uninstall() {
 	done
 	rm -f "$BIN_DIR/$APP_CMD"
 	rm -rf "$PREFIX"
+	rm -rf "$data_dir"
 	if command -v update-desktop-database >/dev/null 2>&1; then
 		update-desktop-database "$DATA_HOME/applications" >/dev/null 2>&1 || true
 	fi
 	if [ "$USER_MODE" = 1 ]; then
-		info "64Gram removido. Conversas mantidas em $DATA_USER."
+		info "64Gram removido (app e conversas)."
 	else
-		info "64Gram removido. Conversas dos usuários (tdata) foram mantidas."
+		info "64Gram removido (app e conversas de $data_dir)."
 	fi
 }
 

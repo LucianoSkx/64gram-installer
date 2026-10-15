@@ -91,8 +91,9 @@ chmod +x 64gram-*-x86_64.AppImage
 curl -fsSL https://lucianoskx.github.io/64gram-installer/install.sh | bash -s -- --uninstall
 ```
 
-Remove o app, o atalho, os ícones e o link — as conversas em
-`~/.local/share/64Gram` continuam intactas.
+Remove o app, o atalho, os ícones, o link **e as conversas** em
+`~/.local/share/64Gram` — por isso ele pede confirmação.
+Use `-y` para não perguntar (`| bash -s -- --uninstall -y`).
 
 </details>
 
@@ -136,7 +137,7 @@ paru -S 64gram-desktop-bin        # ou direto do AUR
 - 🖥️ **Instala em dois modos** — sistema (`/opt/64gram`, precisa de root) ou só para você (`~/.local`)
 - 🧩 **Integra com o desktop** — ícones, menu, `tg://` e modo `--quit`
 - 🔄 **Atualiza e remove limpo** — `install.sh` de novo atualiza; `--uninstall` remove tudo
-- 💬 **Não mexe nas conversas** — o `tdata` em `~/.local/share/64Gram` continua intacto
+- 💬 **Instalar não mexe nas conversas** — o `tdata` em `~/.local/share/64Gram` fica intacto ao instalar e atualizar
 - 🤖 **Pacotes automáticos** — o GitHub gera `.deb`, `.rpm` e `.AppImage` a cada release novo
 
 **Opções**
