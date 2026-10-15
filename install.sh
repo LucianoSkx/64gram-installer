@@ -186,6 +186,14 @@ while [ $# -gt 0 ]; do
 		--system) USER_MODE=0; MODO_EXPLICITO=1; APP_MODE="sistema" ;;
 		--zip) APP_MODE="zip"; USER_MODE=1; MODO_EXPLICITO=1 ;;
 		--appimage) APP_MODE="appimage"; MODO_EXPLICITO=1 ;;
+		--mode=*)
+			MODO_EXPLICITO=1
+			APP_MODE="${1#--mode=}"
+			case "$APP_MODE" in
+				zip) USER_MODE=1 ;;
+				*)   USER_MODE=0 ;;
+			esac
+			;;
 		--uninstall) UNINSTALL=1 ;;
 		-y|--yes) ASSUME_YES=1 ;;
 		--version) shift; VERSION="${1:-}" ;;
@@ -347,8 +355,9 @@ else
 	BIN_DIR="/usr/local/bin"
 	DATA_HOME="/usr/share"
 	if [ "$(id -u)" != "0" ]; then
-		command -v sudo >/dev/null 2>&1 || die "sem sudo: use o modo usuário (padrão) ou rode como root"
-		exec sudo -E bash "$SELF_PATH" ${ORIG_ARGS[@]+"${ORIG_ARGS[@]}"}
+		command -v sudo >/dev/null 2>&1 || die "sem sudo: escolha 2 (appimage) ou 3 (zip) no menu"
+		# leva a escolha junto: senão o script re-perguntaria depois do sudo
+		exec sudo -E bash "$SELF_PATH" --mode="$APP_MODE" ${ORIG_ARGS[@]+"${ORIG_ARGS[@]}"}
 	fi
 fi
 
