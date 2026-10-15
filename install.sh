@@ -34,7 +34,7 @@ USER_MODE=1
 UNINSTALL=0
 ASSUME_YES=0
 MODO_EXPLICITO=0
-MODO_RECOMENDADO="usuario"
+APP_MODE="sistema"   # sistema | appimage | zip
 info() { printf '\033[1;32m==>\033[0m %s\n' "$*"; }
 warn() { printf '\033[1;33m==> ATENÇÃO:\033[0m %s\n' "$*" >&2; }
 die()  { printf '\033[1;31mErro:\033[0m %s\n' "$*" >&2; exit 1; }
@@ -156,20 +156,20 @@ usage() {
 	cat <<EOF
 Uso: $0 [opções]
 
-  --user            instala só para você (padrão, sem pedir senha)
-  --system          instala no sistema, pelo gerenciador (pede sudo)
+  --user            modo zip, só para você (sem pedir senha)
+  --zip             mesmo que --user
+  --appimage        baixa a AppImage para ~/Downloads e integra no menu
   --version <ver>   instala uma versão específica (ex: 1.2.10)
   --local <zip>     instala a partir de um pacote já baixado (offline)
   --uninstall       remove TUDO: app, atalho, ícones e as conversas
   -y, --yes         não pergunta confirmação ao remover
   -h, --help        mostra esta ajuda
 
-Padrão (usuário): sem root e sem senha — app em ~/.local/opt/64gram e comando
-em ~/.local/bin/64gram. É o que o Telegram Desktop oficial faz.
+Sem opção, o script pergunta:
 
-Com --system: baixa o pacote nativo da distro (pkg.tar.zst no Arch/CachyOS,
-.deb no Debian/Ubuntu, .rpm no Fedora/openSUSE) e deixa o gerenciador resolver
-as dependências. Sem pacote disponível, cai no instalador genérico em /opt.
+  1) pacote do sistema  (recomendado) — pelo gerenciador, pede a senha do sudo
+  2) AppImage            — arquivo único em ~/Downloads, não instala no sistema
+  3) pacote zip          — instala só para você, sem senha (em ~/.local)
 
 Em qualquer shell (fish, zsh, bash, dash, sh):
   curl -fsSL $INSTALL_URL | bash
@@ -183,7 +183,9 @@ EOF
 while [ $# -gt 0 ]; do
 	case "$1" in
 		--user) USER_MODE=1; MODO_EXPLICITO=1 ;;
-		--system) USER_MODE=0; MODO_EXPLICITO=1 ;;
+		--system) USER_MODE=0; MODO_EXPLICITO=1; APP_MODE="sistema" ;;
+		--zip) APP_MODE="zip"; USER_MODE=1; MODO_EXPLICITO=1 ;;
+		--appimage) APP_MODE="appimage"; MODO_EXPLICITO=1 ;;
 		--uninstall) UNINSTALL=1 ;;
 		-y|--yes) ASSUME_YES=1 ;;
 		--version) shift; VERSION="${1:-}" ;;
@@ -228,21 +230,68 @@ case "$SELF_PATH" in
 esac
 : "${UPDATE_HINT:=$SELF_PATH}"
 
-# ---------------------------------------------------------- escolha do modo
-# O script pergunta (quando há terminal) e já indica o recomendado para a máquina.
-recomendo_sistema() {
-	# só quando já se é root: qualquer outro caso implica pedir senha,
-	# então o modo usuário (sem senha) é o recomendado — o padrão das distros.
-	[ "$SYS_ROOT" = 1 ] && return 0
-	return 1
+# ---------------------------------------------------------------- appimage
+# Baixa a AppImage e integra no menu: não instala nada no sistema.
+install_appimage() { # $1 = versão
+	local url out dir s
+
+	url="https://github.com/$SELF_REPO/releases/download/v$1/64gram-$1-x86_64.AppImage"
+	out="$HOME/Downloads/64gram-$1-x86_64.AppImage"
+	mkdir -p "$(dirname "$out")"
+
+	info "baixando a AppImage: $url"
+	if ! download "$url" "$out"; then
+		die "não foi possível baixar a AppImage ($url)"
+	fi
+	chmod 755 "$out"
+
+	info "integrando no menu"
+	dir="$HOME/.local/share"
+	mkdir -p "$dir/applications"
+	cat > "$dir/applications/$DESKTOP_ID" <<EOF
+[Desktop Entry]
+Name=$APP_TITLE
+Comment=Unofficial desktop version of Telegram messaging app
+TryExec=$out
+Exec=$out -- %u
+Icon=$ICON_NAME
+Terminal=false
+StartupWMClass=64Gram
+Type=Application
+Categories=Chat;Network;InstantMessaging;Qt;
+MimeType=x-scheme-handler/tg;
+Keywords=tg;chat;im;messaging;messenger;sms;tdesktop;64gram;
+Actions=quit;
+SingleMainWindow=true
+
+[Desktop Action quit]
+Exec=$out -quit
+Name=Quit Telegram
+Icon=application-exit
+EOF
+	for s in $ICON_SIZES; do
+		mkdir -p "$dir/icons/hicolor/${s}x${s}/apps"
+		download "$ICON_URL_BASE/icon${s}.png" "$dir/icons/hicolor/${s}x${s}/apps/$ICON_NAME.png" || true
+	done
+	command -v update-desktop-database >/dev/null 2>&1 && \
+		update-desktop-database "$dir/applications" >/dev/null 2>&1 || true
+
+	cat <<EOF
+
+✔ AppImage pronta: $out
+
+Execute:  $out
+Pelo menu: "64Gram Desktop"
+
+Não instalou nada no sistema — para remover, apague o arquivo
+e ~/.local/share/applications/$DESKTOP_ID
+EOF
 }
 
+# ---------------------------------------------------------- escolha do modo
+# O script pergunta (quando há terminal) e já indica o recomendado para a máquina.
 escolher_modo() {
 	[ "$MODO_EXPLICITO" = 1 ] && return 0
-
-	local sistema=0
-	recomendo_sistema && sistema=1
-	[ "$sistema" = 1 ] && MODO_RECOMENDADO="sistema" || MODO_RECOMENDADO="usuario"
 
 	# com "curl ... | bash" o stdin é o pipe: o terminal de verdade é o /dev/tty.
 	# se não houver terminal (cron, CI, container sem tty), segue a recomendação.
@@ -250,30 +299,30 @@ escolher_modo() {
 	[ -n "${CI:-}" ] || tty="$( [ -e /dev/tty ] && echo /dev/tty )"
 
 	if [ -z "$tty" ]; then
-		[ "$sistema" = 1 ] && USER_MODE=0 || USER_MODE=1
-		info "modo $MODO_RECOMENDADO (recomendado para $SYS_NAME)"
+		APP_MODE="sistema"
+		USER_MODE=0
+		info "modo sistema (recomendado) — vai pedir a senha do sudo"
 		return 0
 	fi
 
+	local pm="${SYS_PM%% *}"
 	printf '\nComo quer instalar o 64Gram?\n\n' > "$tty"
-	printf '  1) Só para você — sem senha\n' > "$tty"
-	printf '     app em ~/.local/opt/64gram e comando em ~/.local/bin\n\n' > "$tty"
-	printf '  2) Para todo o sistema — pelo gerenciador (%s), pede sudo\n' "${SYS_PM%% *}" > "$tty"
-	printf '     app em /opt/64gram, gerenciado pelo sistema\n\n' > "$tty"
-
-	if [ "$sistema" = 1 ]; then
-		printf 'Escolha [1/2] (recomendado: 2 — você já está como root): ' > "$tty"
-	else
-		printf 'Escolha [1/2] (recomendado: 1 — não pede senha): ' > "$tty"
-	fi
+	printf '  1) Pacote do sistema  (recomendado)\n' > "$tty"
+	printf '     pelo gerenciador (%s), em /opt/64gram — vai pedir a senha do sudo\n\n' "$pm" > "$tty"
+	printf '  2) AppImage\n' > "$tty"
+	printf '     arquivo único em ~/Downloads, não instala nada no sistema\n\n' > "$tty"
+	printf '  3) Pacote zip\n' > "$tty"
+	printf '     instala só para você, sem senha (em ~/.local)\n\n' > "$tty"
+	printf 'Escolha [1/2/3] (recomendado: 1): ' > "$tty"
 
 	local escolha=""
 	# "|| true" mantém o que foi lido quando o read vem sem newline final
 	read -r escolha < "$tty" || true
 	case "$escolha" in
-		1|1\.|u|U) USER_MODE=1 ;;
-		2|2\.|s|S) USER_MODE=0 ;;
-		*) [ "$sistema" = 1 ] && USER_MODE=0 || USER_MODE=1 ;;
+		2|2\.|appimage|APPIMAGE|AppImage) APP_MODE="appimage" ;;
+		3|3\.|zip|ZIP)                     APP_MODE="zip"; USER_MODE=1 ;;
+		1|1\.|sistema|s|S)                 APP_MODE="sistema"; USER_MODE=0 ;;
+		*)                                 APP_MODE="sistema"; USER_MODE=0 ;;
 	esac
 	printf '\n' > "$tty"
 }
@@ -384,6 +433,19 @@ uninstall() {
 
 if [ "$UNINSTALL" = 1 ]; then
 	uninstall
+	exit 0
+fi
+
+# a AppImage não passa pelo modo usuário/sistema: resolve antes
+if [ "$APP_MODE" = "appimage" ]; then
+	if [ -z "$VERSION" ]; then
+		download "https://api.github.com/repos/$SELF_REPO/releases/latest" "$TMPD/rel.json" || \
+			die "não consegui consultar a última versão"
+		VERSION="$(awk -F'"' '/"tag_name"/ { print $4; exit }' "$TMPD/rel.json" | sed 's/^v//')"
+		[ -n "$VERSION" ] && [ "$VERSION" != "null" ] || die "não achei a versão"
+	fi
+	info "versão: $VERSION"
+	install_appimage "$VERSION"
 	exit 0
 fi
 
