@@ -340,21 +340,7 @@ pkg_name_for() { # família -> nome do arquivo no release
 }
 
 install_native() { # $1 = versão; usa o gerenciador do sistema
-	local pkg url pm helper
-
-	# Arch/CachyOS: o 64Gram é distribuído como pacote do AUR, como manda a tradição
-	if [ "$SYS_FAMILY" = "arch" ]; then
-		for helper in paru yay pikaur; do
-			command -v "$helper" >/dev/null 2>&1 || continue
-			info "instalando pelo AUR com $helper (64gram-desktop-bin)"
-			if "$helper" -S --needed --noconfirm 64gram-desktop-bin; then
-				return 0
-			fi
-			warn "$helper não conseguiu instalar"
-		done
-		warn "sem helper de AUR (paru/yay/pikaur) — usando o instalador genérico"
-		return 1
-	fi
+	local pkg url pm
 
 	pkg="$(pkg_name_for "$SYS_FAMILY" "$1")"
 	[ -n "$pkg" ] || return 1
