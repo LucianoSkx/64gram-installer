@@ -329,10 +329,17 @@ try_native() {
 	local v helper
 	case "$SYS_FAMILY" in
 		arch)
+			# helpers de AUR recusam root: se viermos do sudo, voltamos ao usuário
+			local as_user=()
+			if [ "$SYS_ROOT" = 1 ] && [ -n "${SUDO_USER:-}" ]; then
+				as_user=(sudo -u "$SUDO_USER" -H)
+			fi
 			for helper in paru yay pikaur; do
 				command -v "$helper" >/dev/null 2>&1 || continue
 				info "instalando pelo AUR com $helper (64gram-desktop-bin)"
-				"$helper" -S --needed --noconfirm 64gram-desktop-bin && return 0
+				if ${as_user[@]+"${as_user[@]}"} "$helper" -S --needed --noconfirm 64gram-desktop-bin; then
+					return 0
+				fi
 				warn "$helper não conseguiu instalar"
 			done
 			return 1 ;;
