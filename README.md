@@ -153,5 +153,15 @@ packaging/PKGBUILD               pacote Arch/CachyOS
 ---
 
 <div align="center">
-<sub>Projeto não-oficial · baseado no <a href="https://github.com/telegramdesktop/tdesktop">Telegram Desktop</a> · licença GPL-3.0</sub>
+
+<p><b>📦 Instalar / baixar</b></p>
+
+<a href="https://github.com/LucianoSkx/64gram-installer/releases/latest"><img alt="última versão" src="https://img.shields.io/github/v/release/LucianoSkx/64gram-installer?style=for-the-badge&label=última%20versão&logo=telegram&logoColor=white"></a>
+<a href="https://lucianoskx.github.io/64gram-installer/"><img alt="instalador" src="https://img.shields.io/badge/instalar-1_comando-2AABEE?style=for-the-badge&logo=gnubash&logoColor=white"></a>
+<a href="https://github.com/LucianoSkx/64gram-installer/stargazers"><img alt="stars" src="https://img.shields.io/github/stars/LucianoSkx/64gram-installer?style=for-the-badge&logo=github&logoColor=white&color=2AABEE"></a>
+
+<br>
+
+<sub>Projeto não-oficial · baseado no <a href="https://github.com/telegramdesktop/tdesktop">Telegram Desktop</a> · <a href="LICENSE">GPL-3.0</a></sub>
+
 </div>
