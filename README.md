@@ -93,7 +93,7 @@ curl -fsSL https://lucianoskx.github.io/64gram-installer/uninstall.sh | bash
 
 Remove o app, o atalho, os ícones, o link **e as conversas** em
 `~/.local/share/64Gram` — por isso ele pede confirmação.
-Use `--yes` para não perguntar (`uninstall.sh | bash --yes`).
+Use `--yes` para não perguntar: `curl -fsSL https://lucianoskx.github.io/64gram-installer/uninstall.sh | bash -s -- --yes`.
 
 </details>
 
