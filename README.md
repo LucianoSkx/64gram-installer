@@ -114,9 +114,15 @@ chmod +x install.sh
 
 <br>
 
+O link único já instala pelo pacote certo — no Arch/CachyOS ele baixa o
+`.pkg.tar.zst` e chama o `pacman -U`, que resolve as dependências sozinho.
+
 ```bash
-cd packaging && makepkg -si      # empacota como .pkg.tar.zst
-paru -S 64gram-desktop-bin        # ou direto do AUR
+# manualmente, a partir do .pkg.tar.zst da página:
+sudo pacman -U 64gram-1.2.10-1-x86_64.pkg.tar.zst
+
+# ou compilando o PKGBUILD deste repo:
+cd packaging && makepkg -si
 ```
 
 </details>

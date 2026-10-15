@@ -27,7 +27,7 @@
     line-height: 1.6;
     text-align: center;
   }
-  .wrap { max-width: 960px; margin: 0 auto; }
+  .wrap { max-width: 1080px; margin: 0 auto; }
   img.hero { width: 100%; max-width: 760px; border-radius: 12px; margin-bottom: 28px; }
   h1 { font-size: 1.6rem; margin: 0 0 6px; }
   p.sub { color: var(--muted); margin: 0 0 28px; }
@@ -46,7 +46,8 @@
   }
   .cmd button:hover { filter: brightness(1.1); }
   .hint { color: #6f8ba6; font-size: .8rem; margin: 8px 0 32px; }
-  .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 0 auto 28px; }
+  .cards { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin: 0 auto 28px; }
+  @media (max-width: 1000px) { .cards { grid-template-columns: repeat(3, 1fr); } }
   @media (max-width: 800px) { .cards { grid-template-columns: repeat(2, 1fr); } }
   @media (max-width: 430px) { .cards { grid-template-columns: 1fr; } }
   .card {
@@ -91,6 +92,7 @@
   <div class="cards">
     <a class="card" id="dl-deb" href="https://github.com/LucianoSkx/64gram-installer/releases/latest"><b>📄 .deb</b><span>Debian · Ubuntu · Mint</span></a>
     <a class="card" id="dl-rpm" href="https://github.com/LucianoSkx/64gram-installer/releases/latest"><b>🎩 .rpm</b><span>Fedora · RHEL · openSUSE</span></a>
+    <a class="card" id="dl-pkg" href="https://github.com/LucianoSkx/64gram-installer/releases/latest"><b>📦 .pkg.tar.zst</b><span>Arch · CachyOS</span></a>
     <a class="card" id="dl-appimage" href="https://github.com/LucianoSkx/64gram-installer/releases/latest"><b>📦 AppImage</b><span>qualquer distro</span></a>
     <a class="card" href="https://github.com/LucianoSkx/64gram-installer"><b>🐙 Código</b><span>GitHub</span></a>
   </div>
@@ -125,6 +127,7 @@ const REPO = "LucianoSkx/64gram-installer";
 const formatos = [
   ["dl-deb", ".deb"],
   ["dl-rpm", ".rpm"],
+  ["dl-pkg", ".pkg.tar.zst"],
   ["dl-appimage", ".AppImage"],
 ];
 

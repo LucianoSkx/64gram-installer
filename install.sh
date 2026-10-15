@@ -408,7 +408,7 @@ try_native() {
 if [ "$USER_MODE" = 0 ] && [ -z "$LOCAL" ] && [ -z "$VERSION" ]; then
 	if try_native; then
 		info "64Gram instalado pelo gerenciador do sistema."
-		printf 'Execute: 64gram\nRemover: %s --uninstall\n' "${UPDATE_HINT:-$SELF_PATH}"
+		printf 'Execute: 64gram\nRemover: %s -s -- --uninstall\n' "${UPDATE_HINT:-$SELF_PATH}"
 		exit 0
 	fi
 	info "sem pacote nativo disponível — seguindo com o instalador genérico"
@@ -600,7 +600,7 @@ cat <<EOF
 
 Execute:        $APP_CMD
 Atualizar:      ${UPDATE_HINT:-$SELF_PATH}
-Remover:        ${UPDATE_HINT:-$SELF_PATH} --uninstall
+Remover:        ${UPDATE_HINT:-$SELF_PATH} -s -- --uninstall
 EOF
 
 if [ "$USER_MODE" = 1 ]; then
