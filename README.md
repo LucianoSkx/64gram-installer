@@ -83,6 +83,20 @@ chmod +x 64gram-*-x86_64.AppImage
 </table>
 
 <details open>
+<summary><b>🗑️ Remover</b></summary>
+
+<br>
+
+```bash
+curl -fsSL https://lucianoskx.github.io/64gram-installer/install.sh | bash -s -- --uninstall
+```
+
+Remove o app, o atalho, os ícones e o link — as conversas em
+`~/.local/share/64Gram` continuam intactas.
+
+</details>
+
+<details open>
 <summary><b>📂 Se você já tem o arquivo</b></summary>
 
 <br>
