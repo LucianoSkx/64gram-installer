@@ -266,8 +266,9 @@ escolher_modo() {
 		printf 'Escolha [1/2] (recomendado: 1 — não pede senha): ' > "$tty"
 	fi
 
-	local escolha
-	read -r escolha < "$tty" || escolha=""
+	local escolha=""
+	# "|| true" mantém o que foi lido quando o read vem sem newline final
+	read -r escolha < "$tty" || true
 	case "$escolha" in
 		1|1\.|u|U) USER_MODE=1 ;;
 		2|2\.|s|S) USER_MODE=0 ;;
