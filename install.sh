@@ -21,7 +21,9 @@ ICON_NAME="64gram"
 ICON_URL_BASE="https://raw.githubusercontent.com/$REPO/dev/Telegram/Resources/art"
 ICON_SIZES="16 32 48 64 128 256 512"
 PREFIX_SYSTEM="/opt/64gram"
-PREFIX_USER="${XDG_DATA_HOME:-$HOME/.local/share}/64gram"
+# instalação do usuário fica em ~/.local/opt para não se confundir com os dados
+# do app, que são em ~/.local/share/64Gram (com G maiúsculo, definido pelo 64Gram)
+PREFIX_USER="$HOME/.local/opt/64gram"
 DATA_USER="${XDG_DATA_HOME:-$HOME/.local/share}/64Gram"
 
 ORIG_ARGS=("$@")
@@ -115,48 +117,65 @@ else
 fi
 
 # ---------------------------------------------------------------- desinstalar
+# Remove o que estiver REALMENTE instalado (modo usuário e/ou sistema), sem
+# depender da flag: instalar e desinstalar podem ser chamados em modos diferentes.
 uninstall() {
-	local data_dir="$DATA_USER"
-
-	# na instalação do sistema os dados são do usuário que chamou, não do root
-	if [ "$USER_MODE" = 0 ] && [ -n "${SUDO_USER:-}" ]; then
-		local home
-		home="$(getent passwd "$SUDO_USER" | cut -d: -f6)"
-		[ -n "$home" ] && data_dir="$home/.local/share/64Gram"
+	local home="$HOME"
+	if [ -n "${SUDO_USER:-}" ]; then
+		local h
+		h="$(getent passwd "$SUDO_USER" | cut -d: -f6)"
+		[ -n "$h" ] && home="$h"
 	fi
 
-	if [ -d "$data_dir" ]; then
+	local prefix_u="$home/.local/opt/64gram"          # instalação do usuário
+	local prefix_s="/opt/64gram"                    # instalação do sistema
+	local dados_u="$home/.local/share/64Gram"       # conversas e conta
+	local s found=0
+
+	[ -e "$prefix_u" ] && found=1
+	[ -e "$prefix_s" ] && found=1
+	[ "$found" = 0 ] && warn "nenhuma instalação encontrada — nada a remover"
+
+	if [ -d "$dados_u" ]; then
 		if [ "$ASSUME_YES" = 0 ] && [ -t 0 ]; then
-			printf '\nIsto apaga TUDO do 64Gram, incluindo as conversas em:\n  %s\n\nContinuar? [s/N] ' "$data_dir" >&2
+			printf '\nIsto apaga TUDO do 64Gram, incluindo as conversas em:\n  %s\n\nContinuar? [s/N] ' "$dados_u" >&2
 			read -r resposta || resposta=""
 			case "$resposta" in
 				s|S|y|Y|sim|SIM) ;;
 				*) info "cancelado — nada foi removido"; return 0 ;;
 			esac
 		else
-			warn "removendo tudo (incluindo conversas): $data_dir"
+			warn "removendo as conversas: $dados_u"
 		fi
-	else
-		info "nenhuma conversa encontrada em $data_dir"
 	fi
 
-	info "removendo $DESKTOP_ID"
-	rm -f "$DATA_HOME/applications/$DESKTOP_ID"
-	local s
-	for s in $ICON_SIZES; do
-		rm -f "$DATA_HOME/icons/hicolor/${s}x${s}/apps/$ICON_NAME.png"
-	done
-	rm -f "$BIN_DIR/$APP_CMD"
-	rm -rf "$PREFIX"
-	rm -rf "$data_dir"
-	if command -v update-desktop-database >/dev/null 2>&1; then
-		update-desktop-database "$DATA_HOME/applications" >/dev/null 2>&1 || true
+	# cada instalação remove só o que ela criou
+	if [ -e "$prefix_u" ]; then
+		info "removendo instalação do usuário"
+		rm -f "$home/.local/bin/$APP_CMD"
+		rm -f "$home/.local/share/applications/$DESKTOP_ID"
+		for s in $ICON_SIZES; do
+			rm -f "$home/.local/share/icons/hicolor/${s}x${s}/apps/$ICON_NAME.png"
+		done
+		rm -rf "$prefix_u"
+		command -v update-desktop-database >/dev/null 2>&1 && \
+			update-desktop-database "$home/.local/share/applications" >/dev/null 2>&1 || true
 	fi
-	if [ "$USER_MODE" = 1 ]; then
-		info "64Gram removido (app e conversas)."
-	else
-		info "64Gram removido (app e conversas de $data_dir)."
+
+	if [ -e "$prefix_s" ]; then
+		info "removendo instalação do sistema"
+		rm -f "$BIN_DIR/$APP_CMD"
+		rm -f "$DATA_HOME/applications/$DESKTOP_ID"
+		for s in $ICON_SIZES; do
+			rm -f "$DATA_HOME/icons/hicolor/${s}x${s}/apps/$ICON_NAME.png"
+		done
+		rm -rf "$prefix_s"
+		command -v update-desktop-database >/dev/null 2>&1 && \
+			update-desktop-database "$DATA_HOME/applications" >/dev/null 2>&1 || true
 	fi
+
+	rm -rf "$dados_u"
+	info "64Gram removido (app e conversas)."
 }
 
 if [ "$UNINSTALL" = 1 ]; then
