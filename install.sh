@@ -392,15 +392,22 @@ uninstall() {
 	[ "$found" = 0 ] && warn "nenhuma instalação encontrada — nada a remover"
 
 	if [ -d "$dados_u" ]; then
-		if [ "$ASSUME_YES" = 0 ] && [ -t 0 ]; then
-			printf '\nIsto apaga TUDO do 64Gram, incluindo as conversas em:\n  %s\n\nContinuar? [s/N] ' "$dados_u" >&2
-			read -r resposta || resposta=""
-			case "$resposta" in
-				s|S|y|Y|sim|SIM) ;;
-				*) info "cancelado — nada foi removido"; return 0 ;;
-			esac
-		else
+		if [ "$ASSUME_YES" = 1 ]; then
 			warn "removendo as conversas: $dados_u"
+		else
+			local tty=""
+			[ -n "${CI:-}" ] || tty="$( [ -e /dev/tty ] && echo /dev/tty )"
+			if [ -n "$tty" ]; then
+				printf '\nIsto apaga TUDO do 64Gram, incluindo as conversas em:\n  %s\n\nContinuar? [s/N] ' "$dados_u" > "$tty"
+				local resposta=""
+				read -r resposta < "$tty" 2>/dev/null || read -r resposta || true
+				case "$resposta" in
+					s|S|y|Y|sim|SIM) ;;
+					*) info "cancelado — nada foi removido"; return 0 ;;
+				esac
+			else
+				warn "removendo as conversas: $dados_u"
+			fi
 		fi
 	fi
 
@@ -413,10 +420,15 @@ uninstall() {
 	esac
 	if [ "$nativo" = 1 ]; then
 		info "removendo o pacote pelo gerenciador do sistema"
+		if [ "$(id -u)" != 0 ] && ! command -v sudo >/dev/null 2>&1; then
+			die "sem sudo para remover o pacote do sistema"
+		fi
+		local elev=""
+		[ "$(id -u)" != 0 ] && elev="sudo"
 		case "$SYS_FAMILY" in
-			arch)   pacman -Rns --noconfirm 64gram ;;
-			debian) apt-get remove -y 64gram ;;
-			rpm|suse) rpm -e 64gram ;;
+			arch)   $elev pacman -Rns --noconfirm 64gram ;;
+			debian) $elev apt-get remove -y 64gram ;;
+			rpm|suse) $elev dnf remove -y 64gram 2>/dev/null || $elev rpm -e 64gram ;;
 		esac
 	fi
 
@@ -434,9 +446,21 @@ uninstall() {
 	fi
 
 	if [ -e "$prefix_s" ]; then
-		if [ "$SYS_ROOT" != 1 ]; then
-			warn "existe também uma instalação do sistema em $prefix_s"
-			warn "para removê-la, rode com --system (o script pede sudo)"
+		if [ "$(id -u)" != 0 ]; then
+			if command -v sudo >/dev/null 2>&1; then
+				info "removendo instalação do sistema (sudo pode pedir senha)"
+				sudo rm -f "$BIN_DIR/$APP_CMD" 2>/dev/null || true
+				sudo rm -f "$DATA_HOME/applications/$DESKTOP_ID" 2>/dev/null || true
+				for s in $ICON_SIZES; do
+					sudo rm -f "$DATA_HOME/icons/hicolor/${s}x${s}/apps/$ICON_NAME.png" 2>/dev/null || true
+				done
+				sudo rm -rf "$prefix_s" 2>/dev/null || true
+				command -v update-desktop-database >/dev/null 2>&1 && \
+					sudo update-desktop-database "$DATA_HOME/applications" >/dev/null 2>&1 || true
+			else
+				warn "existe também uma instalação do sistema em $prefix_s"
+				warn "para removê-la, execute como root (sudo --system)"
+			fi
 		else
 			info "removendo instalação do sistema"
 			rm -f "$BIN_DIR/$APP_CMD" 2>/dev/null || true
