@@ -44,7 +44,10 @@ if [ -n "$VERSION" ]; then
 	URL="https://github.com/$REPO/releases/download/v$VERSION/64Gram_${VERSION}_linux.zip"
 	DIGEST=""
 else
-	json="$(curl -fsSL "https://api.github.com/repos/$REPO/releases/latest")"
+	# sem token o runner do CI leva 403 (rate limit por IP compartilhado)
+	auth=()
+	[ -n "${GITHUB_TOKEN:-}" ] && auth=(-H "Authorization: Bearer $GITHUB_TOKEN")
+	json="$(curl -fsSL "${auth[@]}" "https://api.github.com/repos/$REPO/releases/latest")"
 	VERSION="$(printf '%s' "$json" | jq -r '.tag_name' | sed 's/^v//')"
 	[ "$VERSION" != "null" ] && [ -n "$VERSION" ] || die "não achei a última versão"
 	URL="$(printf '%s' "$json" | jq -r '.assets[] | select(.name | endswith("_linux.zip")) | .browser_download_url')"

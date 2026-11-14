@@ -60,6 +60,7 @@ jobs:
           packaging/build-packages.sh "${args[@]}"
         env:
           NFPM_RUNTIME: ${{ runner.temp }}/runtime-x86_64
+          GITHUB_TOKEN: ${{ github.token }}
 
       - name: pacote arch (.pkg.tar.zst)
         run: |
