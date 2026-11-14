@@ -4,4 +4,4 @@ set -eu
 
 HERE="$(dirname "$(readlink -f "$0")")"
 export PATH="$HERE:$PATH"
-exec "$HERE/Telegram" "$@"
+exec "$HERE/64Gram" "$@"

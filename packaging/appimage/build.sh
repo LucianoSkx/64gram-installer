@@ -25,8 +25,8 @@ trap 'rm -rf "$WORK"' EXIT
 APPDIR="$WORK/AppDir"
 mkdir -p "$APPDIR"
 unzip -qo "$ZIP" -d "$APPDIR"
-[ -f "$APPDIR/Telegram" ] || { echo "binário 'Telegram' ausente no zip" >&2; exit 1; }
-chmod 755 "$APPDIR/Telegram" "$APPDIR/Updater"
+[ -f "$APPDIR/64Gram" ] || { echo "binário '64Gram' ausente no zip" >&2; exit 1; }
+chmod 755 "$APPDIR/64Gram" "$APPDIR/Updater"
 
 cp "$(dirname "$0")/AppRun" "$APPDIR/AppRun"
 chmod 755 "$APPDIR/AppRun"

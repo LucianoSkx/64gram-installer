@@ -16,8 +16,8 @@ homepage: "https://github.com/TDesktop-x64/tdesktop"
 license: "GPL-3.0"
 
 contents:
-  - src: ./stage/Telegram
-    dst: /opt/64gram/Telegram
+  - src: ./stage/64Gram
+    dst: /opt/64gram/64Gram
     file_info:
       mode: 0755
 
@@ -35,7 +35,7 @@ contents:
     file_info:
       mode: 0644
 
-  - src: /opt/64gram/Telegram
+  - src: /opt/64gram/64Gram
     dst: /usr/bin/64gram
     type: symlink
 

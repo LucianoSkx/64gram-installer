@@ -35,16 +35,16 @@ sha256sums=(
 
 package() {
 	install -dm755 "$pkgdir/opt/64gram"
-	cp -a "$srcdir/Telegram" "$pkgdir/opt/64gram/Telegram"
-	chmod 755 "$pkgdir/opt/64gram/Telegram"
+	cp -a "$srcdir/64Gram" "$pkgdir/opt/64gram/64Gram"
+	chmod 755 "$pkgdir/opt/64gram/64Gram"
 
 	# desativa o atualizador interno: quem atualiza é o pacman/instalador
 	install -dm755 "$pkgdir/opt/64gram/externalupdater.d"
-	printf '%s\n' "/opt/64gram/Telegram" \
+	printf '%s\n' "/opt/64gram/64Gram" \
 		> "$pkgdir/opt/64gram/externalupdater.d/telegram-desktop.conf"
 
 	install -dm755 "$pkgdir/usr/bin"
-	ln -s /opt/64gram/Telegram "$pkgdir/usr/bin/64gram"
+	ln -s /opt/64gram/64Gram "$pkgdir/usr/bin/64gram"
 
 	install -dm755 "$pkgdir/usr/share/applications"
 	cat > "$pkgdir/usr/share/applications/io.github.tdesktop_x64.TDesktop.desktop" <<'EOF'

@@ -669,21 +669,21 @@ STAGE="$TMPD/stage"
 mkdir -p "$STAGE"
 extract "$ZIP" "$STAGE"
 
-[ -f "$STAGE/Telegram" ] || die "binário 'Telegram' não encontrado no pacote (mudou o layout do release?)"
+[ -f "$STAGE/64Gram" ] || die "binário '64Gram' não encontrado no pacote (mudou o layout do release?)"
 
 info "instalando em $PREFIX"
 rm -rf "$PREFIX"
 mkdir -p "$PREFIX"
 cp -a "$STAGE/." "$PREFIX/"
-chmod 755 "$PREFIX/Telegram"
-BIN_PATH="$PREFIX/Telegram"
+chmod 755 "$PREFIX/64Gram"
+BIN_PATH="$PREFIX/64Gram"
 
 mkdir -p "$BIN_DIR"
-ln -sf "$PREFIX/Telegram" "$BIN_DIR/$APP_CMD"
+ln -sf "$PREFIX/64Gram" "$BIN_DIR/$APP_CMD"
 
 # desativa o atualizador interno do app (quem atualiza é este instalador)
 mkdir -p "$PREFIX/externalupdater.d"
-printf '%s\n' "$PREFIX/Telegram" > "$PREFIX/externalupdater.d/telegram-desktop.conf"
+printf '%s\n' "$PREFIX/64Gram" > "$PREFIX/externalupdater.d/telegram-desktop.conf"
 
 # ---------------------------------------------------------------- ícones
 for s in $ICON_SIZES; do
@@ -770,7 +770,7 @@ cat <<EOF
 
 ✔ 64Gram $VERSION instalado.
   binário:  $BIN_DIR/$APP_CMD
-  app:      $PREFIX/Telegram
+  app:      $PREFIX/64Gram
 
 Execute:        $APP_CMD
 Atualizar:      ${UPDATE_HINT:-$SELF_PATH}

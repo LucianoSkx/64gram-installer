@@ -83,12 +83,12 @@ rm -rf "$STAGE"
 mkdir -p "$STAGE/usr/share/applications" "$STAGE/externalupdater.d"
 
 unzip -qo "$ZIP" -d "$STAGE"
-[ -f "$STAGE/Telegram" ] || die "binário 'Telegram' ausente no zip"
+[ -f "$STAGE/64Gram" ] || die "binário '64Gram' ausente no zip"
 
 cp "$HERE/shared/io.github.tdesktop_x64.TDesktop.desktop" \
 	"$STAGE/usr/share/applications/io.github.tdesktop_x64.TDesktop.desktop"
 
-printf '%s\n' "/opt/64gram/Telegram" > "$STAGE/externalupdater.d/telegram-desktop.conf"
+printf '%s\n' "/opt/64gram/64Gram" > "$STAGE/externalupdater.d/telegram-desktop.conf"
 
 for size in $ICON_SIZES; do
 	dir="$STAGE/usr/share/icons/hicolor/${size}x${size}/apps"

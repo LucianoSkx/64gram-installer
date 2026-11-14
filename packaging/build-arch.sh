@@ -81,15 +81,15 @@ $sum_lines
 
 package() {
 	install -dm755 "\$pkgdir/opt/64gram"
-	install -Dm755 "Telegram" "\$pkgdir/opt/64gram/Telegram"
+	install -Dm755 "64Gram" "\$pkgdir/opt/64gram/64Gram"
 	install -Dm755 "Updater" "\$pkgdir/opt/64gram/Updater"
 
 	install -dm755 "\$pkgdir/opt/64gram/externalupdater.d"
-	printf '%s\n' "/opt/64gram/Telegram" \\
+	printf '%s\n' "/opt/64gram/64Gram" \\
 		> "\$pkgdir/opt/64gram/externalupdater.d/telegram-desktop.conf"
 
 	install -dm755 "\$pkgdir/usr/bin"
-	ln -s /opt/64gram/Telegram "\$pkgdir/usr/bin/64gram"
+	ln -s /opt/64gram/64Gram "\$pkgdir/usr/bin/64gram"
 
 	install -dm755 "\$pkgdir/usr/share/applications"
 	install -Dm644 "io.github.tdesktop_x64.TDesktop.desktop" \\
